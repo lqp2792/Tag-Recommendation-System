@@ -7,26 +7,26 @@ import org.hibernate.validator.constraints.NotEmpty;
 
 public class Login {
 
-	private String email;
-	private String password;
+	private String loginEmail;
+	private String loginPassword;
 
 	@Email
 	@NotEmpty
-	public String getEmail () {
-		return email;
+	public String getLoginEmail () {
+		return loginEmail;
 	}
 
 	@NotEmpty
 	@Size(min = 2, max = 30)
-	public String getPassword () {
-		return password;
+	public String getLoginPassword () {
+		return loginPassword;
 	}
 
-	public void setEmail (String email) {
-		this.email = email;
+	public void setLoginEmail (String loginEmail) {
+		this.loginEmail = loginEmail;
 	}
 
-	public void setPassword (String password) {
-		this.password = password;
+	public void setLoginPassword (String loginPassword) {
+		this.loginPassword = loginPassword;
 	}
 }

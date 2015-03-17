@@ -100,17 +100,18 @@
 					modelAttribute="login" id="loginForm">
 					<div class="modal-body">
 						<div class="form-group">
-							<form:label for="email" class="control-label" path="email">Email:</form:label>
-							<form:input class="form-control input-sm" id="email"
-								placeholder="Email" path="email" />
-							<form:errors path="email" class="text-danger" />
+							<form:label for="login-email" class="control-label"
+								path="loginEmail">Email:</form:label>
+							<form:input class="form-control input-sm" id="login-email"
+								placeholder="Email" path="loginEmail" />
+							<form:errors path="loginEmail" class="text-danger" />
 						</div>
 						<div class="form-group">
-							<form:label for="password-login" class="control-label"
-								path="password">Password:</form:label>
-							<form:password class="form-control input-sm" id="password-login"
-								placeholder="Your Password" path="password" />
-							<form:errors path="password" class="text-danger" />
+							<form:label for="login-password" class="control-label"
+								path="loginPassword">Password:</form:label>
+							<form:password class="form-control input-sm" id="login-password"
+								placeholder="Your Password" path="loginPassword" />
+							<form:errors path="loginPassword" class="text-danger" />
 						</div>
 					</div>
 					<div class="modal-footer">
@@ -133,10 +134,10 @@
 					</button>
 					<h4 class="modal-title text-center" id="registerModalLabel">Register</h4>
 				</div>
-				<div class="modal-body">
-					<!-- Start Register Form -->
-					<form:form action="register" modelAttribute="user" method="post"
-						role="form" id="registerForm">
+				<!-- Start Register Form -->
+				<form:form action="register" modelAttribute="user" method="post"
+					role="form" id="registerForm">
+					<div class="modal-body">
 						<div class="row">
 							<div class="col-xs-6 col-sm-6 col-md-6">
 								<div class="form-group">
@@ -175,11 +176,11 @@
 								id="password" placeholder="Your Password" />
 							<form:errors class="text-danger" path="password" />
 						</div>
-				</div>
-				<div class="modal-footer">
-					<input type="submit" value="Register"
-						class="btn btn-info btn-block">
-				</div>
+					</div>
+					<div class="modal-footer">
+						<input type="submit" value="Register"
+							class="btn btn-info btn-block">
+					</div>
 				</form:form>
 			</div>
 		</div>

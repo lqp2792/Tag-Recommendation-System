@@ -13,6 +13,7 @@ import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 
+import phu.quang.le.Model.Login;
 import phu.quang.le.Model.User;
 import phu.quang.le.Utility.DBUtility;
 
@@ -23,18 +24,24 @@ public class RegisterController {
 	@RequestMapping(method = RequestMethod.POST)
 	public String processRegistration (@Valid @ModelAttribute("user") User user,
 			BindingResult result, ModelMap model) throws SQLException {
-		if(result.hasErrors ()) {
-			model.addAttribute ("validated", true);
+		if (result.hasErrors ()) {
+			Login login = new Login ();
+			model.addAttribute ("login", login);
 			return "index";
 		}
 		Connection c = DBUtility.getConnection ();
-		String sql = "INSERT INTO user VALUES (default, ?, ?, ?, ?)";
+		String sql = "INSERT INTO users VALUES (default, ?, ?, ?, ?)";
 		PreparedStatement pst = c.prepareStatement (sql);
 		pst.setString (1, user.getEmail ());
 		pst.setString (2, user.getPassword ());
 		pst.setString (3, user.getFirstName ());
 		pst.setString (4, user.getLastName ());
-		System.out.println (pst.toString ());
-		return "success";
+		boolean rs = pst.execute ();
+		if (!rs) {
+			System.out.println ("Register Fail");
+		} else {
+			System.out.println ("Register new account success");
+		}
+		return "redirect:/";
 	}
 }
