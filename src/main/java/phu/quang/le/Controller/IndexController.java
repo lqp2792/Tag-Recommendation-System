@@ -10,7 +10,6 @@ import phu.quang.le.Model.User;
 
 @Controller
 public class IndexController {
-
 	@RequestMapping(value = "/", method = RequestMethod.GET)
 	public ModelAndView getIndexView () {
 		ModelAndView model = new ModelAndView ("index");

@@ -21,7 +21,6 @@ import phu.quang.le.Utility.DBUtility;
 @Controller
 @RequestMapping(value = "/login")
 public class LoginController {
-
 	@RequestMapping(method = RequestMethod.POST)
 	public String processRegistration (@Valid @ModelAttribute("login") Login login,
 			BindingResult result, ModelMap model) throws SQLException {

@@ -92,16 +92,16 @@
 								</span>
 							</div> <!-- /input-group -->
 						</li>
-						<li><a href="index.html"><i class="fa fa-dashboard fa-fw"></i>
-								My Links</a></li>
-						<li><a href="#"><i class="fa fa-bar-chart-o fa-fw"></i>
-								Network<span class="fa arrow"></span></a></li>
-						<li><a href="tables.html"><i class="fa fa-table fa-fw"></i>
+						<li><a href="#"><i class="fa fa-files-o fa-fw"></i> My
+								Links</a></li>
+						<li><a href="#"><i class="fa fa-users fa-fw"></i> Network</a></li>
+						<li><a href="#"><i class="fa fa-globe fa-fw"></i>
 								Discover</a></li>
-						<li><a href="forms.html"><i class="fa fa-edit fa-fw"></i>
+						<li><a href="#"><i class="fa fa-star-o fa-fw"></i>
 								Trending</a></li>
-						<li><a href="#"><i class="fa fa-wrench fa-fw"></i> Add
-								link</a></li>
+						<li><a href="#"><i class="fa fa-plus-square fa-fw"
+								id="add-link" data-toggle="modal" data-target="#addLinkModal"></i>
+								Add Link</a></li>
 						<li><a href="#"><i class="fa fa-cog fa-fw"></i> Setting</a></li>
 					</ul>
 				</div>
@@ -114,6 +114,36 @@
 					<div class="col-lg-12">
 						<h1 class="page-header">Blank</h1>
 					</div>
+				</div>
+			</div>
+		</div>
+		<!-- Add Link Modal -->
+		<div class="modal fade" id="addLinkModal" tabindex="-1" role="dialog"
+			aria-labelledby="addLinkModalLabel" aria-hidden="true">
+			<div class="modal-dialog modal-sm">
+				<div class="modal-content">
+					<div class="modal-header">
+						<button type="button" class="close" data-dismiss="modal"
+							aria-label="Close">
+							<span aria-hidden="true">&times;</span>
+						</button>
+						<h4 class="modal-title text-center" id="addLinkModalLabel">Share
+							New Link</h4>
+					</div>
+					<form:form action="add" method="post" role="form"
+						modelAttribute="newLink" id="loginForm">
+						<div class="modal-body">
+							<div class="form-group">
+								<form:label for="new-link" class="control-label" path="url">Url:</form:label>
+								<form:input class="form-control input-sm" id="new-link"
+									placeholder="Url Link" path="url" />
+							</div>
+						</div>
+						<div class="modal-footer">
+							<input type="submit" value="Add Link"
+								class="btn btn-info btn-block">
+						</div>
+					</form:form>
 				</div>
 			</div>
 		</div>

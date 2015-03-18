@@ -5,13 +5,16 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.servlet.ModelAndView;
 
-@Controller
-@RequestMapping(value = "/dashboard")
-public class PanelController {
+import phu.quang.le.Model.Link;
 
-	@RequestMapping(method = RequestMethod.GET)
+@Controller
+public class PanelController {
+	@RequestMapping(value = "/dashboard", method = RequestMethod.GET)
 	public ModelAndView getDashBoard () {
-		System.out.println ("what the actual fuck");
-		return new ModelAndView ("dashboard");
+		ModelAndView dashboard = new ModelAndView ("dashboard");
+		Link newLink = new Link ();
+		dashboard.addObject ("newLink", newLink);
+		//
+		return dashboard;
 	}
 }
