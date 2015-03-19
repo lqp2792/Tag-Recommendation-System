@@ -23,6 +23,21 @@
         <![endif]-->
 </head>
 <body>
+	<script>
+		$("button#submit").click(function() {
+			alert("did it even get here?");
+			$.ajax({
+				type : "POST",
+				data : $("#addLinkForm").serialize(),
+				url : "/TagRecommend/dashboard/add",
+				async : false,
+				dataType : "json",
+				success : function(data) {
+					alert(data);
+				}
+			});
+		});
+	</script>
 	<div id="wrapper">
 		<!-- Navigation -->
 		<nav class="navbar navbar-default navbar-static-top" role="navigation"
@@ -99,9 +114,9 @@
 								Discover</a></li>
 						<li><a href="#"><i class="fa fa-star-o fa-fw"></i>
 								Trending</a></li>
-						<li><a href="#"><i class="fa fa-plus-square fa-fw"
-								id="add-link" data-toggle="modal" data-target="#addLinkModal"></i>
-								Add Link</a></li>
+						<li><a href="#" id="add-link" data-toggle="modal"
+							data-target="#addLinkModal"><i
+								class="fa fa-plus-square fa-fw"></i> Add Link</a></li>
 						<li><a href="#"><i class="fa fa-cog fa-fw"></i> Setting</a></li>
 					</ul>
 				</div>
@@ -130,18 +145,17 @@
 						<h4 class="modal-title text-center" id="addLinkModalLabel">Share
 							New Link</h4>
 					</div>
-					<form:form action="add" method="post" role="form"
-						modelAttribute="newLink" id="loginForm">
+					<form:form method="post" role="form" modelAttribute="newLink"
+						id="addLinkForm">
 						<div class="modal-body">
 							<div class="form-group">
 								<form:label for="new-link" class="control-label" path="url">Url:</form:label>
-								<form:input class="form-control input-sm" id="new-link"
+								<form:textarea class="form-control" rows="5" id="new-link"
 									placeholder="Url Link" path="url" />
 							</div>
 						</div>
 						<div class="modal-footer">
-							<input type="submit" value="Add Link"
-								class="btn btn-info btn-block">
+							<button class="btn btn-success" id="submit">Submit</button>
 						</div>
 					</form:form>
 				</div>
