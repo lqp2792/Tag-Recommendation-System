@@ -4,10 +4,8 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
 import java.util.StringTokenizer;
-import java.util.TreeSet;
 
 import org.apache.commons.validator.routines.UrlValidator;
 import org.jsoup.Jsoup;
@@ -27,10 +25,11 @@ import phu.quang.le.Model.JsonResponse;
 import phu.quang.le.Model.RecommendTag;
 import phu.quang.le.Model.Topic;
 import phu.quang.le.TopicModeling.ModelUtility;
+import phu.quang.le.Utility.BookmarkSQL;
+import phu.quang.le.Utility.TagSQL;
+import phu.quang.le.Utility.UrlUtility;
 import cc.mallet.topics.ParallelTopicModel;
 import cc.mallet.topics.TopicInferencer;
-import cc.mallet.types.Alphabet;
-import cc.mallet.types.IDSorter;
 import cc.mallet.types.Instance;
 import cc.mallet.types.InstanceList;
 
@@ -47,9 +46,9 @@ public class PanelController {
 		return dashboard;
 	}
 
-	@RequestMapping(value = "/dashboard/add", method = RequestMethod.POST)
+	@RequestMapping(value = "/dashboard/checkBookmark", method = RequestMethod.POST)
 	@ResponseBody
-	public JsonResponse addBookmark (
+	public JsonResponse checkBookmark (
 			@ModelAttribute("newLink") Bookmark newBookmark,
 			ModelMap modelMap)
 			throws IOException {
@@ -118,39 +117,23 @@ public class PanelController {
 			}
 			// Infer topic for url
 			List<Topic> topics = new ArrayList<Topic> ();
-			TopicInferencer inferencer = ModelUtility.getTopicInferencer ();
 			ParallelTopicModel model = ModelUtility.getTopicModel ();
-			InstanceList instances = new InstanceList (ModelUtility.createPipes ());
-			System.out.println (title + description);
+			InstanceList instances = new InstanceList (ModelUtility.getPipe ());
+			TopicInferencer inferencer = model.getInferencer ();
 			instances.addThruPipe (new Instance (title + " " + description, null, url,
 					null));
-			System.out.println (instances.get (0).getData ().toString ());
 			double[] testProbabilities = inferencer.getSampledDistribution
 					(instances.get (0),
 							10, 1, 5);
-			ArrayList<TreeSet<IDSorter>> topicSortedWords = model.getSortedWords ();
-			Alphabet dataAlphabet = model.getAlphabet ();
 			//
 			for (int i = 0; i < model.getNumTopics (); i++) {
-				int rank = 0;
-				if (testProbabilities[i] >= 0.09) {
+				if (testProbabilities[i] >= 0.1) {
 					Topic t = new Topic ();
-					List<RecommendTag> tags = new ArrayList<RecommendTag> ();
 					System.out.println (i + " " + testProbabilities[i]);
+					List<RecommendTag> tags = ModelUtility.getTopWords (i, model,
+							instances);
 					t.setTopicID (i);
 					t.setTopicProbality (testProbabilities[i]);
-					Iterator<IDSorter> iterator = topicSortedWords.get (i).iterator ();
-					//
-					while (iterator.hasNext () && rank < 5) {
-						RecommendTag tag = new RecommendTag ();
-						IDSorter idCountPair = iterator.next ();
-						tag.setContent ((String) dataAlphabet.lookupObject (idCountPair
-								.getID ()));
-						System.out.print (idCountPair.getID () + " ");
-						System.out.println (tag.getContent ());
-						tags.add (tag);
-						rank++;
-					}
 					t.setRecommendTags (tags);
 					topics.add (t);
 				}
@@ -159,5 +142,42 @@ public class PanelController {
 			res.setResult (topics);
 		}
 		return res;
+	}
+
+	@RequestMapping(value = "/dashboard/addBookmark", method = RequestMethod.POST)
+	public @ResponseBody JsonResponse addBookmark (@RequestParam String url,
+			@RequestParam String title, @RequestParam String tags,
+			@RequestParam String comment) {
+		JsonResponse rs = new JsonResponse ();
+		int userID = 1;
+		if (url.isEmpty () || title.isEmpty ()) {
+			rs.setStatus ("FAIL");
+		} else {
+			rs.setStatus ("SUCCESS");
+			int result = -1;
+			// add new bookmark to bookmark_new
+			try {
+				String urlKeywords = UrlUtility.getUrlKeywords (url);
+				String urlDescription = UrlUtility.getUrlDesciption (url);
+				result = BookmarkSQL.addBookmarkToDB (url, title, urlKeywords,
+						urlDescription);
+				System.out.println (result);
+			} catch (IOException e) {
+				System.err.println ("Read URL information Exception!");
+			}
+			// process tags added to bookmark
+			System.out.println (tags);
+			StringTokenizer tokens = new StringTokenizer (tags, " ");
+			while(tokens.hasMoreTokens ()) {
+				String tag = tokens.nextToken ();
+				if(!TagSQL.isTagExisted (tag)) {
+					
+				} else {
+					
+				}
+			}
+		}
+		//
+		return rs;
 	}
 }

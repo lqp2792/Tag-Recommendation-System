@@ -47,7 +47,7 @@
 														data : $(
 																'#add-bookmark-form')
 																.serialize(),
-														url : "/TagRecommend/dashboard/add",
+														url : "/TagRecommend/dashboard/checkBookmark",
 														async : false,
 														dataType : 'json',
 														success : function(data) {
@@ -133,6 +133,10 @@
 					$('#bookmark-tags').val('');
 					getRecommendTag();
 				});
+				$('#add-tag-form').submit(function(e) {
+					e.preventDefault();
+					submitBookmark();
+				});
 				$('[data-toggle="tooltip"]').tooltip();
 			});
 	function getRecommendTag() {
@@ -144,22 +148,23 @@
 			url : "/TagRecommend/dashboard/gettags",
 			data : {
 				"title" : title,
-				"url" : url
+				"url" : url,
 			},
 			success : function(data) {
 				console.log(data);
+				recommended = true;
 				for (i = 0; i < data.result.length; i++) {
 					$('#recommend-tags-div').append(
 							'<strong>Topic ' + data.result[i].topicID + " - "
 									+ data.result[i].topicProbality.toFixed(2)
-									+ "</strong><br /><p>");
+									+ "</strong><br /><div>");
 					var tags = data.result[i].recommendTags;
 					for (j = 0; j < tags.length; j++) {
 						$('#recommend-tags-div').append(
 								'<code class="recommend-tag" style="cursor : copy"> #'
 										+ tags[j].content + ' </code>');
 					}
-					$('#recommend-tags-div').append('</p><br />');
+					$('#recommend-tags-div').append('</div><br />');
 				}
 				$('.recommend-tag').click(
 						function() {
@@ -175,6 +180,23 @@
 			},
 			complete : function() {
 				$('#waiting-message-tag').remove();
+			}
+		});
+	};
+
+	function submitBookmark() {
+		$.ajax({
+			type : "POST",
+			url : "/TagRecommend/dashboard/addBookmark",
+			data : {
+				"title" : title,
+				"url" : url,
+				"tags" : $('#bookmark-tags').val(),
+				"comment" : $('#bookmark-comment').val()
+			},
+			success : function() {
+				$('#add-tag-modal').modal('hide');
+				bootbox.alert("Add Bookmark Success!");
 			}
 		});
 	};
@@ -255,7 +277,7 @@
 						<li><a href="#"><i class="fa fa-star-o fa-fw"></i> Trending</a></li>
 						<li><a href="#" id="add-bookmark-menu" data-toggle="modal"
 							data-target="#add-bookmark-modal"><i class="fa fa-plus-square fa-fw"></i>
-								Add Link</a></li>
+								Add Bookmark</a></li>
 						<li><a href="#"><i class="fa fa-cog fa-fw"></i> Setting</a></li>
 					</ul>
 				</div>
@@ -288,7 +310,7 @@
 						</h4>
 					</div>
 					<form:form method="post" role="form" modelAttribute="newBookmark"
-						id="add-bookmark-form" action="dashboard/add">
+						id="add-bookmark-form" action="dashboard/checkBookmark">
 						<div class="modal-body">
 							<div class="form-group">
 								<form:label for="new-bookmark-textarea"
@@ -320,7 +342,8 @@
 							<i class="fa fa-tag"></i> Add Tag
 						</h4>
 					</div>
-					<form method="post" role="form" id="add-tag-form" action="dashboard/add">
+					<form method="post" role="form" id="add-tag-form"
+						action="dashboard/addBookmark">
 						<div class="modal-body">
 							<div class="form-group">
 								<div class="row bookmark-info">
@@ -359,14 +382,6 @@
 										</p>
 										<div class="waiting-div"></div>
 										<div id="recommend-tags-div"></div>
-										<%-- 		<c:if test="${not empty topics}">
-											<c:forEach var="topic" items="${topics }">
-												<p>${topic.topicID}${topic.topicProbality}</p>
-												<c:forEach var="tag" items="${topic.recommendTags}">
-													<p>${tag.content}</p>
-												</c:forEach>
-											</c:forEach>
-										</c:if> --%>
 									</div>
 								</div>
 								<br />
@@ -386,15 +401,11 @@
 									</div>
 
 								</div>
-								<%-- <form:label for="new-bookmark-textarea"
-									class="control-label text-primary" path="url" id="new-bookmark-label">New Bookmark:</form:label>
-								<form:textarea class="form-control" rows="5" id="new-bookmark-textarea"
-									placeholder="Url Link" path="url" style="resize : none" /> --%>
 							</div>
 						</div>
 						<div class="modal-footer">
 							<button class="btn btn-success">
-								<i class="fa fa-plus"></i> Add Tags
+								<i class="fa fa-plus"></i> Add Bookmark
 							</button>
 						</div>
 					</form>

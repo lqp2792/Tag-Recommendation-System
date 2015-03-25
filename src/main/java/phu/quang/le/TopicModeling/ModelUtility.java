@@ -7,21 +7,24 @@ import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
-import java.util.regex.Pattern;
+import java.util.TreeSet;
 
-import cc.mallet.pipe.CharSequence2TokenSequence;
-import cc.mallet.pipe.CharSequenceLowercase;
+import phu.quang.le.Model.RecommendTag;
 import cc.mallet.pipe.Pipe;
-import cc.mallet.pipe.SerialPipes;
-import cc.mallet.pipe.TokenSequence2FeatureSequence;
-import cc.mallet.pipe.TokenSequenceRemoveStopwords;
 import cc.mallet.topics.ParallelTopicModel;
-import cc.mallet.topics.TopicAssignment;
-import cc.mallet.topics.TopicInferencer;
-import cc.mallet.types.LabelAlphabet;
+import cc.mallet.types.Alphabet;
+import cc.mallet.types.IDSorter;
+import cc.mallet.types.InstanceList;
 
 public class ModelUtility {
+
+	public static Pipe getPipe () throws URISyntaxException {
+		InstanceList instances = InstanceList.load (new File (ModelUtility.class
+				.getClassLoader ().getResource ("Instance.lda").toURI ()));
+		return instances.getPipe ();
+	}
 
 	public static ParallelTopicModel getTopicModel () throws URISyntaxException,
 			FileNotFoundException, IOException, ClassNotFoundException {
@@ -35,36 +38,22 @@ public class ModelUtility {
 		return model;
 	}
 
-	public static TopicInferencer getTopicInferencer () throws FileNotFoundException,
-			IOException, ClassNotFoundException, URISyntaxException {
-		TopicInferencer inferencer = null;
-		File file = new File (ModelUtility.class.getClassLoader ().
-				getResource ("TopicInferencer.lda").toURI ());
-		ObjectInputStream objectInput = new ObjectInputStream (new FileInputStream (file));
-		inferencer = (TopicInferencer) objectInput.readObject ();
-		objectInput.close ();
+	public static List<RecommendTag> getTopWords (int topicID, ParallelTopicModel model,
+			InstanceList instances) {
+		List<RecommendTag> topWords = new ArrayList<RecommendTag> ();
+		Alphabet dataAlphabet = instances.getDataAlphabet ();
+		ArrayList<TreeSet<IDSorter>> topicSortedWords = model.getSortedWords ();
+		Iterator<IDSorter> iterator = topicSortedWords.get (topicID).iterator ();
+		int rank = 0;
+		while (iterator.hasNext () && rank < 5) {
+			RecommendTag tag = new RecommendTag ();
+			IDSorter idCountPair = iterator.next ();
+			tag.setContent ((String) dataAlphabet.lookupObject (idCountPair
+					.getID ()));
+			topWords.add (tag);
+			rank++;
+		}
 		//
-		return inferencer;
-	}
-
-	public static SerialPipes createPipes () throws IOException,
-			URISyntaxException {
-		ArrayList<Pipe> pipeList = new ArrayList<Pipe> ();
-		pipeList.add (new CharSequenceLowercase ());
-		pipeList.add (new CharSequence2TokenSequence (Pattern
-				.compile ("\\p{L}[\\p{L}\\p{P}]+\\p{L}")));
-		pipeList.add (new TokenSequenceRemoveStopwords (new File (ModelUtility.class
-				.getClassLoader ().getResource ("stoplist/en.txt").toURI ()),
-				"UTF-8", false, false, false));
-		pipeList.add (new TokenSequence2FeatureSequence ());
-		//
-		return new SerialPipes (pipeList);
-	}
-
-	public static void main (String[] args) throws FileNotFoundException,
-			ClassNotFoundException, IOException, URISyntaxException {
-		ParallelTopicModel model = getTopicModel ();
-		List<TopicAssignment> data = model.getData ();
-		System.out.println (model.getAlphabet ().size ());
+		return topWords;
 	}
 }
