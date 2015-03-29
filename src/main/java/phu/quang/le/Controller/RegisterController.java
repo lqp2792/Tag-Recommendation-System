@@ -13,7 +13,6 @@ import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 
-import phu.quang.le.Model.Login;
 import phu.quang.le.Model.User;
 import phu.quang.le.Utility.DBUtility;
 
@@ -25,8 +24,6 @@ public class RegisterController {
 	public String processRegistration (@Valid @ModelAttribute("user") User user,
 			BindingResult result, ModelMap model) throws SQLException {
 		if (result.hasErrors ()) {
-			Login login = new Login ();
-			model.addAttribute ("login", login);
 			return "index";
 		}
 		Connection c = DBUtility.getConnection ();

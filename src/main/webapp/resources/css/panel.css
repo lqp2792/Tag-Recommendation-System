@@ -3,11 +3,7 @@
 .bookmark-info {
 	margin-left: 10px;
 	margin-right: 10px;
-}
-
-.bookmark-info:after {
-	content:
-		"  _______________________________________________________________  ";
+	border-bottom: 1px solid #eee;
 }
 
 .tooltip-inner {
@@ -15,4 +11,21 @@
 	/* If max-width does not work, try using width instead */
 	width: 350px;
 	font-size: 14px;
+}
+
+.bookmark {
+	border-bottom: 1px solid #EEE;
+}
+
+.bookmark-tag {
+	cursor: pointer;
+}
+
+.bookmark-tag:hover {
+	text-decoration: underline;
+}
+
+.modal {
+	position: absolute;
+	overflow: scroll;
 }
