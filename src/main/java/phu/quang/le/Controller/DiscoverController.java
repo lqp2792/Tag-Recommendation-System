@@ -10,10 +10,12 @@ import java.util.TreeSet;
 import javax.servlet.http.HttpSession;
 
 import org.springframework.stereotype.Controller;
+import org.springframework.ui.ModelMap;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
+import org.springframework.web.servlet.ModelAndView;
 
 import phu.quang.le.Model.Bookmark;
 import phu.quang.le.Model.JsonResponse;
@@ -26,8 +28,24 @@ import cc.mallet.types.Alphabet;
 import cc.mallet.types.IDSorter;
 
 @Controller
+@RequestMapping(value = "/discover")
 public class DiscoverController {
-	@RequestMapping(value = "/dashboard/subscription", method = RequestMethod.POST)
+	@RequestMapping(method = RequestMethod.GET)
+	public ModelAndView getDiscoverView(HttpSession session, ModelMap map) {
+		if (session.getAttribute("userID") == null) {
+			return new ModelAndView("index");
+		} else {
+			Bookmark newBookmark = new Bookmark();
+			ModelAndView dashboard = new ModelAndView("dashboard");
+			dashboard.addObject("newBookmark", newBookmark);
+			dashboard.addObject("firstName", session.getAttribute("firstName"));
+			dashboard.addObject("lastName", session.getAttribute("lastName"));
+
+			return dashboard;
+		}
+	}
+
+	@RequestMapping(value = "/subscription", method = RequestMethod.POST)
 	public @ResponseBody JsonResponse getTagsSubcription(HttpSession session) {
 		JsonResponse rs = new JsonResponse();
 		List<Object> result = new ArrayList<Object>();
@@ -48,7 +66,7 @@ public class DiscoverController {
 		return rs;
 	}
 
-	@RequestMapping(value = "/dashboard/defaultDiscover", method = RequestMethod.POST)
+	@RequestMapping(value = "/defaultDiscover", method = RequestMethod.POST)
 	public @ResponseBody JsonResponse defaultDiscover(HttpSession session,
 			@RequestParam(value = "subscriptionTags") String[] subscriptionTags) {
 		JsonResponse rs = new JsonResponse();

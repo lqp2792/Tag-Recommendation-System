@@ -104,6 +104,16 @@ $(document).ready(function() {
 	function extractLast(term) {
 		return split(term).pop();
 	}
+	/* Kiểm tra nếu vào discover */
+	if(document.URL.indexOf('discover') > -1) {
+		if($('.bookmarks').hasClass('show')) {
+			$('.bookmarks').removeClass('show').addClass('hidden');	
+		}
+		if($('.network').hasClass('show')) {
+			$('.network').removeClass('show').addClass('hidden');
+		}
+		$('.discover').removeClass('hidden').addClass('show');
+	}
 });
 /* =============================================== */
 $(document).ready(function() {
@@ -176,10 +186,6 @@ $(document).ready(function() {
 	$('#my-bookmarks-menu').click(function() {
 		clickMyBookmarks();
 	});
-	/* Click discover menu javascript */
-	$('#discover-menu').click(function() {
-		clickDiscoverMenu();
-	});
 	$('#nw-add-tag-modal').on('shown.bs.modal', function() {
 		$('#nw-tag').val('');
 	});
@@ -245,10 +251,8 @@ function getRecommendTag() {
 						if (content == null) {
 							$('#bookmark-tags').val($(this).text().trim());
 						} else {
-							$('#bookmark-tags').val(
-									content + ' ' + $(this).text().trim());
+							$('#bookmark-tags').val(content + ' ' + $(this).text().trim());
 						}
-
 					});
 		},
 		complete : function() {
@@ -279,38 +283,35 @@ function submitBookmark() {
 /* =============================================== */
 /* Click discover menu */
 /* =============================================== */
-function clickDiscoverMenu() {
-	$('.bookmarks').removeClass('show').addClass('hidden');
-	$('.discover').removeClass('hidden').addClass('show');
-	$.ajax({
-		type : 'POST',
-		url : '/TagRecommend/dashboard/subscription',
-		success : function(data) {
-			console.log(data);
-			String
-			text = 'Your most used tags: ';
-			var tags = [];
-			for (i = 0; i < data.result[0].length; i++) {
-				tags[i] = data.result[0][i].tag;
-				text += '<span>(' + data.result[0][i].weight
-						+ ')<code>#' + data.result[0][i].tag
-						+ '</code></span>';
+$(document).ready(function(e){
+	if(document.URL.indexOf('discover') > -1) {
+		$.ajax({
+			type : 'POST',
+			url : '/TagRecommend/discover/subscription',
+			success : function(data) {
+				console.log(data);
+				var text = 'Your most used tags: ';
+				var tags = [];
+				for (i = 0; i < data.result[0].length; i++) {
+					tags[i] = data.result[0][i].tag;
+					text += '<span>(' + data.result[0][i].weight + ')<code>#' + data.result[0][i].tag + '</code></span>';
+				}
+				$('#discover-most-used-tags').html(text);
+				var subscription = null;
+				if (data.result[1] == "EMPTY") {
+					subscription = '<h4 class="text-danger">You did not set tag subcription</h4>';
+					$('#discover-subscription').html(subscription);
+					$('.page-content').find('.discover').append('<p class="text-center text-info">System will use'
+											+ 'top 5 most used tags for subscription as default!</p>');
+					getDefaultSubscription(tags);
+				} else {
+					// / nếu có dùng tag subscription
+				}
 			}
-			$('#discover-most-used-tags').html(text);
-			String
-			subscription = null;
-			if (data.result[1] == "EMPTY") {
-				subscription = '<h4 class="text-danger">You did not set tag subcription</h4>';
-				$('#discover-subscription').html(subscription);
-				$('.page-content').find('.discover').append('<p class="text-center text-info">System will use'
-										+ 'top 5 most used tags for subscription as default!</p>');
-				getDefaultSubscription(tags);
-			} else {
-				// / nếu có dùng tag subscription
-			}
-		}
-	});
-}
+		});
+	}
+});
+	
 /* =============================================== */
 /* Discover các Bookmark theo default subscription */
 /* =============================================== */
@@ -322,7 +323,7 @@ function getDefaultSubscription(tags) {
 				subscriptionTags : tags
 			},
 			traditional : true,
-			url : '/TagRecommend/dashboard/defaultDiscover',
+			url : '/TagRecommend/discover/defaultDiscover',
 			success : function(data) {
 				console.log(data);
 				$('.page-content').find('.discover').html('');

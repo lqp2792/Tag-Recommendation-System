@@ -28,7 +28,6 @@ import phu.quang.le.Model.JsonResponse;
 import phu.quang.le.Model.RecommendUser;
 import phu.quang.le.TopicModeling.ModelUtility;
 import phu.quang.le.Utility.DBUtility;
-import phu.quang.le.Utility.TagSQL;
 import phu.quang.le.Utility.UserSQL;
 import cc.mallet.topics.ParallelTopicModel;
 import cc.mallet.types.Alphabet;

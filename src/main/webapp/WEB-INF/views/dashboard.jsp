@@ -59,7 +59,7 @@
 								class="fa fa-align-justify fa-fw"></i> My Bookmarks</a></li>
 						<li><a href="network" id="network-menu"><i
 								class="fa fa-users fa-fw"></i> Network</a></li>
-						<li><a href="#" id="discover-menu"><i
+						<li><a href="discover" id="discover-menu"><i
 								class="fa fa-globe fa-fw"></i> Discover</a></li>
 						<li><a href="#" id="trending-menu"><i
 								class="fa fa-star-o fa-fw"></i> Trending</a></li>
