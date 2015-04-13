@@ -38,13 +38,14 @@ import cc.mallet.types.InstanceList;
 
 @Controller
 public class PanelController {
+	public List<Topic> topics = new ArrayList<Topic>();
 
 	@RequestMapping(value = "/dashboard", method = RequestMethod.GET)
 	public ModelAndView getDashBoard(HttpSession session) {
 		if (session.getAttribute("firstName") == null) {
 			return new ModelAndView("index");
 		} else {
-			int userID = 1;
+			int userID = (int) session.getAttribute("userID");
 			ModelAndView dashboard = new ModelAndView("dashboard");
 			Bookmark newBookmark = new Bookmark();
 			dashboard.addObject("newBookmark", newBookmark);
@@ -99,7 +100,7 @@ public class PanelController {
 		} else {
 			System.out.println(url);
 			System.out.println(title);
-			//
+			topics.clear();
 			res.setStatus("SUCCESS");
 			// Make url document more information
 			Document doc = Jsoup.connect(url).get();
@@ -126,7 +127,6 @@ public class PanelController {
 				System.out.println("Meta description : " + description);
 			}
 			// Infer topic for url
-			List<Topic> topics = new ArrayList<Topic>();
 			ParallelTopicModel model = ModelUtility.getTopicModel();
 			InstanceList instances = new InstanceList(ModelUtility.getPipe());
 			TopicInferencer inferencer = model.getInferencer();
@@ -136,7 +136,7 @@ public class PanelController {
 					instances.get(0), 10, 1, 5);
 			//
 			for (int i = 0; i < model.getNumTopics(); i++) {
-				if (testProbabilities[i] >= 0.1) {
+				if (testProbabilities[i] >= 0.09) {
 					Topic t = new Topic();
 					System.out.println(i + " " + testProbabilities[i]);
 					List<RecommendTag> tags = ModelUtility.getTopWords(i,
@@ -156,9 +156,9 @@ public class PanelController {
 	@RequestMapping(value = "/dashboard/addBookmark", method = RequestMethod.POST)
 	public @ResponseBody JsonResponse addBookmark(@RequestParam String url,
 			@RequestParam String title, @RequestParam String tags,
-			@RequestParam String comment) {
+			@RequestParam String comment, HttpSession session) {
 		JsonResponse rs = new JsonResponse();
-		int userID = 1;
+		int userID = (int) session.getAttribute("userID");
 		if (url.isEmpty() || title.isEmpty()) {
 			rs.setStatus("FAIL");
 		} else {
@@ -170,7 +170,8 @@ public class PanelController {
 				String urlKeywords = UrlUtility.getUrlKeywords(url);
 				String urlDescription = UrlUtility.getUrlDesciption(url);
 				bookmarkID = BookmarkSQL.addBookmarkToDB(url, title,
-						urlKeywords, urlDescription);
+						urlKeywords, urlDescription, userID);
+				BookmarkSQL.addBookmarkTopics(bookmarkID, topics);
 			} catch (IOException e) {
 				System.err.println("Read URL information: " + e);
 			}

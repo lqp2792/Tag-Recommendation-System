@@ -69,15 +69,25 @@ public class TagSQL {
 				pst1.setInt(1, userID);
 				pst1.setInt(2, tagID);
 				ResultSet rs1 = pst1.executeQuery();
-				rs1.next();
-				int tagWeight = rs1.getInt(3);
-				/* Đẩy tag weight + 1 khi sử dụng lại tag */
-				sql = "UPDATE user_tag SET tag_weight = ? WHERE userID = ? AND tagID = ?";
-				pst1 = c.prepareStatement(sql);
-				pst1.setInt(1, tagWeight+1);
-				pst1.setInt(2, userID);
-				pst1.setInt(3, tagID);
-				pst1.executeUpdate();
+				if (rs1.next()) {
+					int tagWeight = rs1.getInt(3);
+					/* Đẩy tag weight + 1 khi sử dụng lại tag */
+					sql = "UPDATE user_tag SET tag_weight = ? WHERE userID = ? AND tagID = ?";
+					pst1 = c.prepareStatement(sql);
+					pst1.setInt(1, tagWeight + 1);
+					pst1.setInt(2, userID);
+					pst1.setInt(3, tagID);
+					pst1.executeUpdate();
+				} else {
+					pst1.close();
+					/* Thêm thông tin user - tag */
+					sql = "INSERT INTO user_tag VALUES (?, ?, 1)";
+					pst1 = c.prepareStatement(sql);
+					pst1.setInt(1, userID);
+					pst1.setInt(2, tagID);
+					pst1.executeUpdate();
+				}
+
 			} else {
 				/* Nếu tag chưa tồn tại trong dữ liệu của người dùng này */
 				sql = "INSERT INTO tags_new VALUES (default, ?) ";
