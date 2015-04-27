@@ -9,10 +9,11 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 
+import phu.quang.le.Model.AdvanceBookmark;
 import phu.quang.le.Model.Bookmark;
-import phu.quang.le.Model.FollowBookmark;
 import phu.quang.le.Model.RecommendUser;
 import phu.quang.le.Model.TagWeight;
+import phu.quang.le.Model.User;
 
 /**
  * @author phule
@@ -40,27 +41,67 @@ public class UserSQL {
 			result = pst.executeUpdate();
 		} catch (SQLException e) {
 			System.err.println("Add user tagged bookmark: " + e);
+		} finally {
+			DBUtility.closeConnection(c);
 		}
-		//
+
 		return result;
 	}
 
-	public static List<Bookmark> getAllBookmark(int userID) {
+	public static User userStatistic(int userID) {
+		User u = new User();
+		Connection c = DBUtility.getConnection();
+		String sql = "SELECT COUNT(userID) FROM bookmarks_new WHERE userID = ?";
+		try {
+			PreparedStatement pst = c.prepareStatement(sql);
+			pst.setInt(1, userID);
+			ResultSet rs = pst.executeQuery();
+			if (rs.next()) {
+				u.setBookmarkCount(rs.getInt(1));
+			}
+			sql = "SELECT COUNT(userIDa) FROM users_follow WHERE userIDa = ?";
+			pst = c.prepareStatement(sql);
+			pst.setInt(1, userID);
+			rs = pst.executeQuery();
+			if (rs.next()) {
+				u.setFollowingCount(rs.getInt(1));
+			}
+			sql = "SELECT COUNT(userIDb) FROM users_follow WHERE userIDb = ?";
+			pst = c.prepareStatement(sql);
+			pst.setInt(1, userID);
+			rs = pst.executeQuery();
+			if (rs.next()) {
+				u.setFollowerCount(rs.getInt(1));
+			}
+		} catch (SQLException e) {
+			System.err.println("User Statistics: " + e);
+		} finally {
+			DBUtility.closeConnection(c);
+		}
+		return u;
+	}
+
+	public static List<Bookmark> getAllBookmark(int userID, int offset) {
 		List<Bookmark> bookmarks = new ArrayList<Bookmark>();
 		Connection c = DBUtility.getConnection();
-		String sql = "SELECT * FROM bookmarks_new WHERE userID = ?";
+		String sql = "SELECT * FROM bookmarks_new WHERE userID = ? LIMIT 5 OFFSET ?";
 		PreparedStatement pst;
 		try {
 			pst = c.prepareStatement(sql);
 			pst.setInt(1, userID);
+			pst.setInt(2, offset);
 			ResultSet rs = pst.executeQuery();
 			while (rs.next()) {
 				Bookmark b = new Bookmark();
 				List<String> tags = new ArrayList<String>();
 				int bookmarkID = rs.getInt(1);
+				b.setBookmarkID(rs.getInt(1));
 				b.setUrl(rs.getString(2));
 				b.setTitle(rs.getString(3));
 				b.setDate(rs.getDate(7));
+				b.setViewTimes(rs.getInt(8));
+				b.setTotalRating(rs.getDouble(9));
+				b.setCopyTimes(rs.getInt(10));
 				String sql1 = "SELECT tag_content FROM bookmark_tags_new bt, tags_new t "
 						+ "WHERE bookmarkID = ? AND bt.tagID = t.tagID";
 				PreparedStatement pst1 = c.prepareStatement(sql1);
@@ -70,10 +111,22 @@ public class UserSQL {
 					tags.add(rs1.getString(1));
 				}
 				b.setTags(tags);
+				sql1 = "SELECT rating FROM user_rating WHERE userID = ? AND bookmarkID = ?";
+				pst1 = c.prepareStatement(sql1);
+				pst1.setInt(1, userID);
+				pst1.setInt(2, bookmarkID);
+				rs1 = pst1.executeQuery();
+				if (rs1.next()) {
+					b.setRated(rs1.getDouble(1));
+				} else {
+					b.setRated(0);
+				}
 				bookmarks.add(b);
 			}
 		} catch (SQLException e) {
 			System.out.println("Get All Bookmark: " + e);
+		} finally {
+			DBUtility.closeConnection(c);
 		}
 
 		return bookmarks;
@@ -83,7 +136,7 @@ public class UserSQL {
 		List<TagWeight> mostUsedTags = new ArrayList<TagWeight>();
 		Connection c = DBUtility.getConnection();
 		String sql = "SELECT tag_content, tag_weight FROM user_tag, tags_new "
-				+ "WHERE userID = ? AND user_tag.tagID = tags_new.tagID "
+				+ "WHERE userID = ? AND user_tag.tagID = tags_new.tagID AND tag_weight > 1 "
 				+ "ORDER BY tag_weight DESC LIMIT 5";
 		try {
 			PreparedStatement pst = c.prepareStatement(sql);
@@ -302,39 +355,69 @@ public class UserSQL {
 		} catch (SQLException e) {
 			System.out.println("Check Follow: " + e);
 		} finally {
-			try {
-				c.close();
-			} catch (SQLException e) {
-				System.err.println("Is Followed - Close connection: " + e);
-			}
+			DBUtility.closeConnection(c);
 		}
 
 		return isFollowed;
 	}
 
-	public static List<FollowBookmark> getAllBookmarksFromFriend(int userID,
-			int offset) {
-		List<FollowBookmark> bookmarks = new ArrayList<FollowBookmark>();
+	public static List<AdvanceBookmark> getAllBookmarksFromFriend(int userID,
+			int offset, int sortBy) {
+		List<AdvanceBookmark> bookmarks = new ArrayList<AdvanceBookmark>();
 		Connection c = DBUtility.getConnection();
-		String sql = "SELECT * FROM bookmarks_new WHERE userID IN "
-				+ "(SELECT userIDb FROM users_follow WHERE userIDa = ?) ORDER BY timestamp LIMIT 5 OFFSET ?";
+		String sql = "SELECT * FROM bookmarks_new WHERE";
+		switch (sortBy) {
+		case 1:
+			sql += " rating > 0 AND ";
+			break;
+		case 2:
+			sql += " view_count > 1 AND ";
+			break;
+		case 3:
+			sql += " copy_count > 0 AND ";
+			break;
+		}
+		sql += " userID IN (SELECT userIDb FROM users_follow WHERE userIDa = ?) ORDER BY ";
+		switch (sortBy) {
+		case 1:
+			sql += "rating ";
+			break;
+		case 2:
+			sql += "view_count ";
+			break;
+		case 3:
+			sql += "copy_count ";
+			break;
+		case 4:
+			sql += "timestamp ";
+			break;
+		}
+		sql += " LIMIT 5 OFFSET ?";
 		try {
 			PreparedStatement pst = c.prepareStatement(sql);
 			pst.setInt(1, userID);
 			pst.setInt(2, offset);
+			System.out.println("SQL: " + pst.toString());
 			ResultSet rs = pst.executeQuery();
 			while (rs.next()) {
-				FollowBookmark b = new FollowBookmark();
+				AdvanceBookmark b = new AdvanceBookmark();
 				List<String> tags = new ArrayList<String>();
 				int bookmarkID = rs.getInt(1);
 				b.setBookmarkID(bookmarkID);
+				b.setPostedUserID(rs.getInt(6));
 				b.setUrl(rs.getString(2));
 				b.setTitle(rs.getString(3));
 				b.setDate(rs.getDate(7));
-				String sql1 = "SELECT tag_content FROM bookmark_tags_new bt, tags_new t "
-						+ "WHERE bookmarkID = ? AND bt.tagID = t.tagID";
+				b.setViewTimes(rs.getInt(8));
+				b.setTotalRating(rs.getDouble(9));
+				b.setCopyTimes(rs.getInt(10));
+				System.out.println(isFollowed(userID, rs.getInt(6)));
+				b.setFriend(isFollowed(userID, rs.getInt(6)));
+				String sql1 = "SELECT tag_content FROM user_tag_bookmark utb, tags_new t "
+						+ "WHERE userID = ? AND bookmarkID = ? AND utb.tagID = t.tagID";
 				PreparedStatement pst1 = c.prepareStatement(sql1);
-				pst1.setInt(1, bookmarkID);
+				pst1.setInt(1, rs.getInt(6));
+				pst1.setInt(2, bookmarkID);
 				ResultSet rs1 = pst1.executeQuery();
 				while (rs1.next()) {
 					tags.add(rs1.getString(1));
@@ -348,13 +431,85 @@ public class UserSQL {
 					b.setFirstName(rs1.getString(1));
 					b.setLastName(rs1.getString(2));
 				}
-				//
+				sql1 = "SELECT rating FROM user_rating WHERE userID = ? AND bookmarkID = ?";
+				pst1 = c.prepareStatement(sql1);
+				pst1.setInt(1, userID);
+				pst1.setInt(2, bookmarkID);
+				rs1 = pst1.executeQuery();
+				if (rs1.next()) {
+					b.setRated(rs1.getDouble(1));
+				} else {
+					b.setRated(0);
+				}
+				sql1 = "SELECT * FROM user_copy WHERE userID = ? AND bookmarkID = ?";
+				pst1 = c.prepareStatement(sql1);
+				pst1.setInt(1, userID);
+				pst1.setInt(2, bookmarkID);
+				rs1 = pst1.executeQuery();
+				if (rs1.next()) {
+					b.setCopied(true);
+				} else {
+					b.setCopied(false);
+				}
 				bookmarks.add(b);
 			}
 		} catch (SQLException e) {
 			System.out.println("Get All Bookmark from friend: " + e);
+		} finally {
+			DBUtility.closeConnection(c);
 		}
 
 		return bookmarks;
+	}
+
+	public static int editSubscription(int userID,
+			List<String> subscriptionTags, List<String> deletedTags) {
+		int result = -1;
+		Connection c = DBUtility.getConnection();
+		if (subscriptionTags != null) {
+			String sql = "INSERT INTO user_subscription VALUES (?, ?)";
+			System.out
+					.println("Insert subscription tags into user_subscription");
+			try {
+				PreparedStatement pst = c.prepareStatement(sql);
+				pst.setInt(1, userID);
+				for (int i = 0; i < subscriptionTags.size(); i++) {
+					pst.setString(2, subscriptionTags.get(i));
+					result = pst.executeUpdate();
+					if (result < 1) {
+						System.err.println("Insert subscription tags fail!");
+					}
+				}
+			} catch (SQLException e) {
+				System.err.println("Insert subscription tags exception: " + e);
+			}
+		} else {
+			System.out.println("Subscription tags is empty");
+		}
+		if (deletedTags != null) {
+			String sql = "DELETE FROM user_subscription WHERE userID = ? AND subscription IN (";
+			for (int i = 0; i < deletedTags.size() - 1; i++) {
+				sql += "?, ";
+			}
+			sql += "?)";
+			try {
+				System.out
+						.println("Delete subscription tags from user_subscription");
+				PreparedStatement pst = c.prepareStatement(sql);
+				pst.setInt(1, userID);
+				for (int i = 0; i < deletedTags.size(); i++) {
+					pst.setString(i + 2, deletedTags.get(i));
+				}
+				result = pst.executeUpdate();
+				if(result < 1) {
+					System.err.println("Delete subscription tags fail!");
+				}
+			} catch (SQLException e) {
+				System.err.println("Delete subscription tags exception: " + e);
+			}
+		} else {
+			System.out.println("Deleted subscription tags is empty");
+		}
+		return result;
 	}
 }

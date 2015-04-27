@@ -1,11 +1,15 @@
 package phu.quang.le.Controller;
 
+import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.StringTokenizer;
+import java.util.TreeSet;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 import javax.servlet.http.HttpSession;
 
@@ -15,43 +19,77 @@ import org.jsoup.nodes.Document;
 import org.jsoup.select.Elements;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.ModelMap;
-import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.servlet.ModelAndView;
 
+import phu.quang.le.Model.AdditionalTag;
 import phu.quang.le.Model.Bookmark;
 import phu.quang.le.Model.JsonResponse;
 import phu.quang.le.Model.RecommendTag;
 import phu.quang.le.Model.Topic;
+import phu.quang.le.Model.User;
+import phu.quang.le.TopicModeling.ModelPrepareThread;
 import phu.quang.le.TopicModeling.ModelUtility;
 import phu.quang.le.Utility.BookmarkSQL;
 import phu.quang.le.Utility.TagSQL;
+import phu.quang.le.Utility.ThreadWorker;
 import phu.quang.le.Utility.UrlUtility;
 import phu.quang.le.Utility.UserSQL;
 import cc.mallet.topics.ParallelTopicModel;
 import cc.mallet.topics.TopicInferencer;
+import cc.mallet.types.Alphabet;
+import cc.mallet.types.IDSorter;
 import cc.mallet.types.Instance;
 import cc.mallet.types.InstanceList;
 
 @Controller
+@RequestMapping(value = "/dashboard")
 public class PanelController {
 	public List<Topic> topics = new ArrayList<Topic>();
+	public static List<String> availableTags = new ArrayList<String>();
 
-	@RequestMapping(value = "/dashboard", method = RequestMethod.GET)
-	public ModelAndView getDashBoard(HttpSession session) {
+	@RequestMapping(method = RequestMethod.GET)
+	public ModelAndView getDashBoard(HttpSession session)
+			throws FileNotFoundException, ClassNotFoundException, IOException {
 		if (session.getAttribute("firstName") == null) {
 			return new ModelAndView("index");
 		} else {
+			try {
+				(new ModelPrepareThread()).start();
+				if (session.getAttribute("availableTags") == null) {
+					InstanceList instances = InstanceList.load(new File(
+							ModelUtility.class.getClassLoader()
+									.getResource("Instance.lda").toURI()));
+					Alphabet dataAlphabet = instances.getDataAlphabet();
+					ParallelTopicModel model = ModelUtility.getTopicModel();
+					ArrayList<TreeSet<IDSorter>> topicSortedWords = model
+							.getSortedWords();
+					int steps = 500;
+					int cpuCount = Runtime.getRuntime().availableProcessors();
+					ExecutorService executor = Executors
+							.newFixedThreadPool(cpuCount);
+					for (int i = 0; i < model.getNumTopics(); i += steps) {
+						int from = i;
+						int to = i + steps;
+						Runnable worker = new ThreadWorker(topicSortedWords,
+								dataAlphabet, from, to);
+						executor.execute(worker);
+					}
+					executor.shutdown();
+					while (!executor.isTerminated()) {
+					}
+					session.setAttribute("availableTags", availableTags);
+				}
+			} catch (URISyntaxException e) {
+				System.err.println("Get Alphabet: " + e);
+			}
 			int userID = (int) session.getAttribute("userID");
+			User u = UserSQL.userStatistic(userID);
 			ModelAndView dashboard = new ModelAndView("dashboard");
-			Bookmark newBookmark = new Bookmark();
-			dashboard.addObject("newBookmark", newBookmark);
-			List<Bookmark> bookmarks = UserSQL.getAllBookmark(userID);
-			System.out.println(session.getAttribute("firstName"));
-			dashboard.addObject("bookmarks", bookmarks);
+			dashboard.addObject("user", u);
 			dashboard.addObject("firstName", session.getAttribute("firstName"));
 			dashboard.addObject("lastName", session.getAttribute("lastName"));
 			//
@@ -59,21 +97,36 @@ public class PanelController {
 		}
 	}
 
-	@RequestMapping(value = "/dashboard/checkBookmark", method = RequestMethod.POST)
+	@RequestMapping(value = "/getBookmarks", method = RequestMethod.GET)
+	public @ResponseBody JsonResponse getBookmarks(HttpSession session,
+			@RequestParam int offset) {
+		JsonResponse rs = new JsonResponse();
+		int userID = (int) session.getAttribute("userID");
+		List<Bookmark> bookmarks = UserSQL.getAllBookmark(userID, offset);
+		if (bookmarks.size() == 0) {
+			rs.setStatus("EMPTY");
+		} else {
+			rs.setStatus("SUCCESS");
+		}
+		rs.setResult(bookmarks);
+		return rs;
+	}
+
+	@RequestMapping(value = "/checkBookmark", method = RequestMethod.POST)
 	@ResponseBody
-	public JsonResponse checkBookmark(
-			@ModelAttribute("newLink") Bookmark newBookmark, ModelMap modelMap)
+	public JsonResponse checkBookmark(String url, ModelMap modelMap)
 			throws IOException {
-		String url = newBookmark.getUrl();
 		JsonResponse res = new JsonResponse();
 		UrlValidator urlValidator = new UrlValidator();
-		if (url.isEmpty()) {
+		if (url == null) {
 			res.setStatus("FAIL");
 			res.setResult("Url can not be blank");
 			return res;
 		} else {
 			if (urlValidator.isValid(url)) {
 				res.setStatus("SUCCESS");
+				Bookmark newBookmark = new Bookmark();
+				newBookmark.setUrl(url);
 				Document doc = Jsoup.connect(url).get();
 				String title = doc.title();
 				newBookmark.setTitle(title);
@@ -88,7 +141,7 @@ public class PanelController {
 		}
 	}
 
-	@RequestMapping(value = "/dashboard/gettags", method = RequestMethod.POST)
+	@RequestMapping(value = "/gettags", method = RequestMethod.POST)
 	@ResponseBody
 	public JsonResponse addBookmarkTags(@RequestParam String url,
 			@RequestParam String title) throws FileNotFoundException,
@@ -153,7 +206,7 @@ public class PanelController {
 		return res;
 	}
 
-	@RequestMapping(value = "/dashboard/addBookmark", method = RequestMethod.POST)
+	@RequestMapping(value = "/addBookmark", method = RequestMethod.POST)
 	public @ResponseBody JsonResponse addBookmark(@RequestParam String url,
 			@RequestParam String title, @RequestParam String tags,
 			@RequestParam String comment, HttpSession session) {
@@ -199,12 +252,68 @@ public class PanelController {
 					System.out.println("Added information user added " + tagID
 							+ " to bookmark");
 				}
-				List<Bookmark> bookmarks = UserSQL.getAllBookmark(userID);
-				rs.setResult(bookmarks);
 			}
-			// process user add tag, add bookmark information
 		}
-		//
+		return rs;
+	}
+
+	@RequestMapping(value = "/getOtherTags", method = RequestMethod.GET)
+	public @ResponseBody JsonResponse getOtherTags(HttpSession session,
+			@RequestParam int bookmarkID) {
+		JsonResponse rs = new JsonResponse();
+		if (bookmarkID == 0) {
+			rs.setStatus("FAIL");
+		} else {
+			int userID = (int) session.getAttribute("userID");
+			List<AdditionalTag> additionalTags = TagSQL.getOtherTags(userID,
+					bookmarkID);
+			if (additionalTags.size() == 0) {
+				rs.setStatus("FAIL");
+			} else {
+				rs.setStatus("SUCCESS");
+				rs.setResult(additionalTags);
+			}
+		}
+
+		return rs;
+	}
+
+	@RequestMapping(value = "/getTotalRating", method = RequestMethod.GET)
+	public @ResponseBody JsonResponse getTotalRating(HttpSession session,
+			@RequestParam int bookmarkID) {
+		JsonResponse rs = new JsonResponse();
+		if (bookmarkID == 0) {
+			rs.setStatus("FAIL");
+		} else {
+			double totalRating = BookmarkSQL.getTotalRating(bookmarkID);
+			rs.setStatus("SUCCESS");
+			rs.setResult(totalRating);
+		}
+		return rs;
+	}
+
+	@RequestMapping(value = "/getBookmarkTags", method = RequestMethod.GET)
+	public @ResponseBody JsonResponse getBookmarkTags(HttpSession session,
+			@RequestParam int bookmarkID) {
+		JsonResponse rs = new JsonResponse();
+		if (bookmarkID == 0) {
+			rs.setStatus("FAIL");
+		} else {
+			List<String> tags = BookmarkSQL.getTags(bookmarkID);
+			rs.setStatus("SUCCESS");
+			rs.setResult(tags);
+		}
+		return rs;
+	}
+
+	@RequestMapping(value = "/editBookmark", method = RequestMethod.POST)
+	public @ResponseBody JsonResponse editBookmark(HttpSession session,
+			@RequestParam int bookmarkID,
+			@RequestParam(required = false) List<String> addedTags,
+			@RequestParam(required = false) List<String> deletedTags) {
+		JsonResponse rs = new JsonResponse();
+		int userID = (int) session.getAttribute("userID");
+		BookmarkSQL.editBookmark(bookmarkID, userID, addedTags, deletedTags);
 		return rs;
 	}
 }

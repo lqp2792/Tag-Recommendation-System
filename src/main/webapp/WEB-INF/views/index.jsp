@@ -8,12 +8,12 @@
 <meta name="description" content="">
 <meta name="author" content="">
 <title>Social Bookmarking System</title>
-<link href="css/bootstrap.min.css" rel="stylesheet">
-<link href="css/main.css" rel="stylesheet">
-<link href="css/font-awesome.css" rel="stylesheet" type="text/css">
-<script src="js/jquery.js"></script>
-<script src="js/bootstrap.min.js"></script>
-<script src="js/main.js"></script>
+<link href="<c:url value="css/bootstrap.min.css" />" rel="stylesheet">
+<link href="<c:url value="css/main.css"/>" rel="stylesheet">
+<link href="<c:url value="css/font-awesome.css"/>" rel="stylesheet" type="text/css">
+<script src="<c:url value="js/jquery.js"/>"></script>
+<script src="<c:url value="js/bootstrap.min.js"/>"></script>
+<script src="<c:url value="js/main.js"/>"></script>
 </head>
 <body>
 	<header id="header" role="banner">

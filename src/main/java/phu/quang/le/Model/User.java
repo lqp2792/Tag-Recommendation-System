@@ -5,6 +5,9 @@ public class User {
 	private String firstName;
 	private String lastName;
 	private String password;
+	private int bookmarkCount;
+	private int followingCount;
+	private int followerCount;
 
 	public String getEmail() {
 		return email;
@@ -36,5 +39,29 @@ public class User {
 
 	public void setPassword(String password) {
 		this.password = password;
+	}
+
+	public int getBookmarkCount() {
+		return bookmarkCount;
+	}
+
+	public void setBookmarkCount(int bookmarkCount) {
+		this.bookmarkCount = bookmarkCount;
+	}
+
+	public int getFollowingCount() {
+		return followingCount;
+	}
+
+	public void setFollowingCount(int followingCount) {
+		this.followingCount = followingCount;
+	}
+
+	public int getFollowerCount() {
+		return followerCount;
+	}
+
+	public void setFollowerCount(int followerCount) {
+		this.followerCount = followerCount;
 	}
 }

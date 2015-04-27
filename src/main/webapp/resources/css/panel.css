@@ -31,6 +31,10 @@
 	overflow: scroll;
 }
 
+.modal-body p {
+	word-wrap: break-word;
+}
+
 .col-xs-15, .col-sm-15, .col-md-15, .col-lg-15 {
 	position: relative;
 	min-height: 1px;
@@ -84,4 +88,112 @@
 
 .center-div {
 	text-align: center;
+}
+
+.jumbotron {
+	padding: 0.5em 0.6em;
+	h1
+	{
+	font-size
+	:
+	2em;
+}
+
+p {
+	font-size: 1.2em;
+	.
+	btn
+	{
+	padding
+	:
+	0.5em;
+}
+
+}
+margin-top
+:
+ 
+10
+px
+;
+
+    
+margin-bottom
+:
+ 
+5
+px
+;
+
+
+}
+.progress {
+	background: rgba(245, 245, 245, 1);
+	border: 0px solid rgba(245, 245, 245, 1);
+	border-radius: 4px;
+	height: 20px;
+}
+
+.progress-bar-very-poor {
+	background: rgba(255, 0, 0, 1);
+}
+
+.progress-bar-quite-poor {
+	background: rgba(242, 117, 0, 1);
+}
+
+.progress-bar-poor {
+	background: rgba(242, 186, 0, 1);
+}
+
+.progress-bar-quite-fair {
+	background: rgba(22, 176, 184, 1);
+}
+
+.progress-bar-fair {
+	background: rgba(0, 230, 242, 1);
+}
+
+.progress-bar-acceptable {
+	background: rgba(22, 138, 184, 1);
+}
+
+.progress-bar-quite-good {
+	background: rgba(230, 242, 0, 1);
+}
+
+.progress-bar-good {
+	background: rgba(194, 242, 0, 1);
+}
+
+.progress-bar-very-good {
+	background: rgba(105, 242, 0, 1);
+}
+
+ul.nav-stacked ul.nav-stacked>li>a {
+	padding-left: 30px;
+}
+
+ul.nav-stacked ul.nav-stacked ul.nav-stacked>li>a {
+	padding-left: 45px;
+}
+
+span.arrow {
+	float: right;
+	margin-top: 7px;
+}
+
+.tag-delete {
+	cursor: pointer;
+}
+
+.tag-restore {
+	cursor: pointer;
+}
+.urlive-container {
+    margin-top:15px;
+}
+
+h1, h2, h3, h4, h5, h6 {
+	word-wrap: break-word;
 }

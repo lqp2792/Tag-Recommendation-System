@@ -3,8 +3,9 @@ package phu.quang.le.Model;
 import java.sql.Date;
 import java.util.List;
 
-public class FollowBookmark {
+public class AdvanceBookmark {
 	private int bookmarkID;
+	private int postedUserID;
 	private String firstName;
 	private String lastName;
 	private String url;
@@ -12,7 +13,12 @@ public class FollowBookmark {
 	private List<String> tags;
 	private Date date;
 	private int copyTimes;
-
+	private int viewTimes;
+	private double totalRating;
+	private double rated;
+	private boolean isFriend;
+	private boolean isCopied;
+	
 	public String getUrl() {
 		return url;
 	}
@@ -75,6 +81,54 @@ public class FollowBookmark {
 
 	public void setBookmarkID(int bookmarkID) {
 		this.bookmarkID = bookmarkID;
+	}
+
+	public int getPostedUserID() {
+		return postedUserID;
+	}
+
+	public void setPostedUserID(int postedUserID) {
+		this.postedUserID = postedUserID;
+	}
+
+	public int getViewTimes() {
+		return viewTimes;
+	}
+
+	public void setViewTimes(int viewTimes) {
+		this.viewTimes = viewTimes;
+	}
+
+	public boolean isFriend() {
+		return isFriend;
+	}
+
+	public void setFriend(boolean isFriend) {
+		this.isFriend = isFriend;
+	}
+
+	public double getTotalRating() {
+		return totalRating;
+	}
+
+	public void setTotalRating(double totalRating) {
+		this.totalRating = totalRating;
+	}
+
+	public double getRated() {
+		return rated;
+	}
+
+	public void setRated(double rated) {
+		this.rated = rated;
+	}
+
+	public boolean isCopied() {
+		return isCopied;
+	}
+
+	public void setCopied(boolean isCopied) {
+		this.isCopied = isCopied;
 	}
 
 }

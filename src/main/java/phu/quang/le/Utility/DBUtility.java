@@ -36,6 +36,14 @@ public class DBUtility {
 		return connection;
 	}
 
+	public static void closeConnection(Connection c) {
+		try {
+			c.close();
+		} catch (SQLException e) {
+			System.err.println("Close connection: " + e);
+		}
+	}
+
 	public static void main(String[] args) {
 		Connection conn = getConnection();
 		if (conn != null) {

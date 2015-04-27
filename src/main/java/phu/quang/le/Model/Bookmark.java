@@ -4,11 +4,16 @@ import java.sql.Date;
 import java.util.List;
 
 public class Bookmark {
-
+	private int bookmarkID;
 	private String url;
 	private String title;
 	private List<String> tags;
 	private Date date;
+	private int viewTimes;
+	private double totalRating;
+	private double rated;
+	private int copyTimes;
+	private boolean isCopied;
 
 	public String getUrl() {
 		return url;
@@ -40,6 +45,54 @@ public class Bookmark {
 
 	public void setDate(Date date) {
 		this.date = date;
+	}
+
+	public int getBookmarkID() {
+		return bookmarkID;
+	}
+
+	public void setBookmarkID(int bookmarkID) {
+		this.bookmarkID = bookmarkID;
+	}
+
+	public int getViewTimes() {
+		return viewTimes;
+	}
+
+	public void setViewTimes(int viewTimes) {
+		this.viewTimes = viewTimes;
+	}
+
+	public int getCopyTimes() {
+		return copyTimes;
+	}
+
+	public void setCopyTimes(int copyTimes) {
+		this.copyTimes = copyTimes;
+	}
+
+	public double getTotalRating() {
+		return totalRating;
+	}
+
+	public void setTotalRating(double totalRating) {
+		this.totalRating = totalRating;
+	}
+
+	public double getRated() {
+		return rated;
+	}
+
+	public void setRated(double rated) {
+		this.rated = rated;
+	}
+
+	public boolean isCopied() {
+		return isCopied;
+	}
+
+	public void setCopied(boolean isCopied) {
+		this.isCopied = isCopied;
 	}
 
 }
