@@ -1,18 +1,19 @@
-jQuery(function($) {
-	$(function() {
-		$('#main-slider.carousel').carousel({
-			interval : 7000,
-			pause : false
-		});
-	});
+$(document).on('click', '#register-menu', function(e) {
+	$('#login-modal').modal('hide');
 });
-
+$(document).on('click', '#login-menu', function(e) {
+	$('#register-modal').modal('hide');
+});
 $(document).ready(function(e) {
-	$('#login-modal').on('shown.bs.modal', function(e) {
-		$('#register-modal').modal('hide');
+	$('.tlt-h').textillate({
+		minDisplayTime: 7000,  
+	    out :{  delay: 3, effect: 'lightSpeedOut'},
+	    loop: true
 	});
-	$('#register-modal').on('shown.bs.modal', function(e) {
-		$('#login-modal').modal('hide');
+	$('.tlt-p').textillate({
+	    minDisplayTime: 1000, 
+	    out :{  delay: 3, effect: 'lightSpeedOut'},
+	    loop: true
 	});
 	/* center modal */
 	function centerModals() {
@@ -66,6 +67,50 @@ $(document).ready(function(e) {
 			});
 		}
 	});
-	$('#register-modal').submit(function(e) {
+	$('#register-form').submit(function(e) {
+		submitRegisterForm();
 	});
 });
+
+function submitRegisterForm() {
+	var isReady = true;
+	if(!$('#first-name').val()) {
+		$('#first-name').closest('.form-group').addClass('has-error').addClass('has-feedback');
+		$('#first-name').after('<span class="glyphicon glyphicon-remove form-control-feedback"></span>');
+		$('#first-name').after('<p class="text-danger error-message">First Name can not be blank</p>');
+		isReady = false;
+	} 
+	if(!$('#last-name').val()) {
+		$('#last-name').closest('.form-group').addClass('has-error').addClass('has-feedback');
+		$('#last-name').after('<span class="glyphicon glyphicon-remove form-control-feedback"></span>');
+		$('#last-name').after('<p class="text-danger error-message">Last Name can not be blank</p>');
+		isReady = false;
+	} 
+	if(!$('#email-register').val()) {
+		$('#email-register').closest('.form-group').addClass('has-error').addClass('has-feedback');
+		$('#email-register').after('<span class="glyphicon glyphicon-remove form-control-feedback"></span>');
+		$('#email-register').after('<p class="text-danger error-message">Email can not be blank</p>');
+		isReady = false;
+	} 
+	if(!$('#password').val()) {
+		$('#password').closest('.form-group').addClass('has-error').addClass('has-feedback');
+		$('#password').after('<span class="glyphicon glyphicon-remove form-control-feedback"></span>');
+		$('#password').after('<p class="text-danger error-message">Password can not be blank</p>');
+		isReady = false;
+	}
+	
+	if(isReady === true) {
+		$.ajax({
+			type : 'POST',
+			url : '/TagRecommend/register',
+			data : {
+				'firstName' : $('#first-name').val(),
+				'lastName' : $('#last-name').val(),
+				'email' : $('#email-register').val(),
+				'password' : $('#password').val()
+			}, success : function(data) {
+				
+			}
+		});
+	}
+}
