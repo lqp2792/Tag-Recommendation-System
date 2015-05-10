@@ -17,11 +17,12 @@ import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.servlet.ModelAndView;
 
 import phu.quang.le.Model.AdditionalTag;
-import phu.quang.le.Model.Bookmark;
 import phu.quang.le.Model.AdvanceBookmark;
+import phu.quang.le.Model.Bookmark;
 import phu.quang.le.Model.JsonResponse;
 import phu.quang.le.Model.RateResult;
 import phu.quang.le.Model.RecommendUser;
+import phu.quang.le.Model.SearchUser;
 import phu.quang.le.Utility.BookmarkSQL;
 import phu.quang.le.Utility.DBUtility;
 import phu.quang.le.Utility.TagSQL;
@@ -35,11 +36,11 @@ public class NetworkController {
 	@RequestMapping(method = RequestMethod.GET)
 	public ModelAndView getNetworkView(HttpSession session, ModelMap map) {
 		if (session.getAttribute("userID") == null) {
-			return new ModelAndView("index");
+			return new ModelAndView("redirect:/");
 		} else {
 			int userID = (int) session.getAttribute("userID");
 			if (session.getAttribute("sortBy") == null) {
-				session.setAttribute("sortBy", 4);
+				session.setAttribute("sortBy", 5);
 			}
 			List<RecommendUser> recommendUsers = UserSQL
 					.getRecommendUsers(userID);
@@ -67,10 +68,12 @@ public class NetworkController {
 			sql = "DELETE FROM users_follow WHERE userIDa = ? AND userIDb = ?";
 			System.out.println("UserID: " + userID + " unfollowed UserID: "
 					+ targetUserID);
+			rs.setResult(false);
 		} else {
 			sql = "INSERT INTO users_follow VALUES (?, ?)";
 			System.out.println("UserID: " + userID + " followed UserID: "
 					+ targetUserID);
+			rs.setResult(true);
 		}
 		try {
 			PreparedStatement pst = c.prepareStatement(sql);
@@ -82,11 +85,7 @@ public class NetworkController {
 			rs.setStatus("FAIL");
 			System.out.println("Follow: " + e);
 		} finally {
-			try {
-				c.close();
-			} catch (SQLException e) {
-				System.err.println("Follow: close connection: " + e);
-			}
+			DBUtility.closeConnection(c);
 		}
 
 		return rs;
@@ -123,23 +122,22 @@ public class NetworkController {
 		JsonResponse rs = new JsonResponse();
 		int result = -1;
 		int userID = (int) session.getAttribute("userID");
-		// size - 1 do sẽ có một phần tử trống ở cuối array
-		for (int i = 0; i < tags.size() - 1; i++) {
+		for (int i = 0; i < tags.size(); i++) {
 			String tag = tags.get(i);
 			int tagID = TagSQL.addTagToDB(userID, tag);
 			result = TagSQL.addTagToBookmark(bookmarkID, tagID);
 			if (result == 0) {
-				System.err.println("Can not add tag to bookmark");
 				rs.setStatus("FAIL");
+				rs.setResult("Could not add tag to bookmark");
+				return rs;
 			} else {
 				rs.setStatus("SUCCESS");
 				System.out.println("Added tag ID: " + tagID + " to bookmark");
 			}
 			result = UserSQL.userTaggedBookmark(userID, bookmarkID, tagID);
 			if (result == 0) {
-				System.err
-						.println("Can not add information about user tag bookmark");
 				rs.setStatus("FAIL");
+				rs.setResult("Could not add information about user tag bookmark");
 			} else {
 				rs.setStatus("SUCCESS");
 				System.out.println("Added information user added " + tagID
@@ -178,7 +176,9 @@ public class NetworkController {
 		if (bookmarkID == 0) {
 			rs.setStatus("FAIL");
 		} else {
-			BookmarkSQL.bookmarkClick(bookmarkID);
+			rs.setStatus("SUCCESS");
+			int clickCount = BookmarkSQL.bookmarkClick(bookmarkID);
+			rs.setResult(clickCount);
 		}
 		return rs;
 	}
@@ -247,6 +247,61 @@ public class NetworkController {
 			rs.setResult(BookmarkSQL.getCopyTimes(bookmarkID));
 		} else {
 			rs.setStatus("FAIL");
+		}
+		return rs;
+	}
+
+	@RequestMapping(value = "/updateOnlineUsers", method = RequestMethod.GET)
+	public @ResponseBody JsonResponse uncopyBookmark(HttpSession session) {
+		JsonResponse rs = new JsonResponse();
+		rs.setResult(UserSQL.onlineUsers());
+		return rs;
+	}
+
+	@RequestMapping(value = "/search", method = RequestMethod.GET)
+	public @ResponseBody JsonResponse search(HttpSession session,
+			@RequestParam String searchInput, @RequestParam int sortBy) {
+		JsonResponse rs = new JsonResponse();
+		int userID = (int) session.getAttribute("userID");
+		if (searchInput.charAt(0) == '#') {
+			System.out.println("Search Tag: " + searchInput);
+			session.setAttribute("sortBy", sortBy);
+			List<AdvanceBookmark> bookmarks = TagSQL.search(searchInput,
+					userID, sortBy);
+			if (bookmarks == null) {
+				rs.setStatus("FAIL");
+				rs.setResult("Something wrong was happen!");
+			} else {
+				rs.setStatus("SUCCESS");
+				rs.setResult(bookmarks);
+			}
+		} else if (searchInput.charAt(0) == '@') {
+			List<SearchUser> users = UserSQL.search(searchInput, userID);
+			if (users == null) {
+				rs.setStatus("FAIL");
+				rs.setResult("Something wrong was happen!");
+			} else {
+				rs.setStatus("SUCCESS");
+				rs.setResult(users);
+			}
+		} else {
+			BookmarkSQL.search(searchInput);
+		}
+		return rs;
+	}
+
+	@RequestMapping(value = "/deleteOtherTag", method = RequestMethod.POST)
+	public @ResponseBody JsonResponse deleteOtherTag(HttpSession session,
+			@RequestParam int bookmarkID, @RequestParam String otherTag) {
+		JsonResponse rs = new JsonResponse();
+		int result = -1;
+		int userID = (int) session.getAttribute("userID");
+		result = TagSQL.deleteOtherTag(userID, bookmarkID, otherTag);
+		if (result > 0) {
+			rs.setStatus("SUCCESS");
+		} else {
+			rs.setStatus("FAIL");
+			rs.setResult("Something wrong was happen!");
 		}
 		return rs;
 	}

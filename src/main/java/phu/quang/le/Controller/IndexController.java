@@ -1,6 +1,5 @@
 package phu.quang.le.Controller;
 
-import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpSession;
 
 import org.springframework.stereotype.Controller;
@@ -11,13 +10,12 @@ import org.springframework.web.bind.annotation.RequestMethod;
 public class IndexController {
 
 	@RequestMapping(value = "/", method = RequestMethod.GET)
-	public String getIndexView (HttpServletRequest request) {
-		HttpSession session = request.getSession (false);
-		if (session == null) {
-			session = request.getSession ();
+	public String getIndexView(HttpSession session) {
+		if (session.getAttribute("firstName") == null) {
+			System.out.println("Session does not exist -> index");
 			return "index";
 		} else {
-			System.out.println ("Redirect");
+			System.out.println("Session exists -> dashboard");
 			return "redirect:/dashboard";
 		}
 	}

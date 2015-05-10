@@ -30,9 +30,6 @@ public class TrendingController {
 		if (session.getAttribute("userID") == null) {
 			return new ModelAndView("index");
 		} else {
-			if (session.getAttribute("sortBy") == null) {
-				session.setAttribute("sortBy", 4);
-			}
 			ModelAndView trending = new ModelAndView("dashboard");
 			List<TagWeight> tagWeights = TagSQL.getTopMostUsedTags();
 			trending.addObject("firstName", session.getAttribute("firstName"));

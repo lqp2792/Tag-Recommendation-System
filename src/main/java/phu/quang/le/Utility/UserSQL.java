@@ -7,11 +7,14 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.Date;
 import java.util.List;
 
 import phu.quang.le.Model.AdvanceBookmark;
 import phu.quang.le.Model.Bookmark;
+import phu.quang.le.Model.OnlineHistory;
 import phu.quang.le.Model.RecommendUser;
+import phu.quang.le.Model.SearchUser;
 import phu.quang.le.Model.TagWeight;
 import phu.quang.le.Model.User;
 
@@ -20,6 +23,113 @@ import phu.quang.le.Model.User;
  *
  */
 public class UserSQL {
+	public static String getFirstNameByID(int userID) {
+		String firstName = null;
+		Connection c = DBUtility.getConnection();
+		String sql = "SELECT first_name FROM users WHERE id = ?";
+		try {
+			PreparedStatement pst = c.prepareStatement(sql);
+			pst.setInt(1, userID);
+			ResultSet rs = pst.executeQuery();
+			if (rs.next()) {
+				firstName = rs.getString(1);
+			}
+		} catch (SQLException e) {
+			System.out.println("Get First Name Exception: " + e);
+		} finally {
+			DBUtility.closeConnection(c);
+		}
+		return firstName;
+	}
+
+	public static String getLastNameByID(int userID) {
+		String lastName = null;
+		Connection c = DBUtility.getConnection();
+		String sql = "SELECT last_name FROM users WHERE id = ?";
+		try {
+			PreparedStatement pst = c.prepareStatement(sql);
+			pst.setInt(1, userID);
+			ResultSet rs = pst.executeQuery();
+			if (rs.next()) {
+				lastName = rs.getString(1);
+			}
+		} catch (SQLException e) {
+			System.out.println("Get First Name Exception: " + e);
+		} finally {
+			DBUtility.closeConnection(c);
+		}
+		return lastName;
+	}
+
+	public static int updateLoginHistory(int userID) {
+		int result = -1;
+		Connection c = DBUtility.getConnection();
+		String sql = "SELECT * FROM login_history WHERE userID = ?";
+		try {
+			PreparedStatement pst = c.prepareStatement(sql);
+			pst.setInt(1, userID);
+			ResultSet rs = pst.executeQuery();
+			if (rs.next()) {
+				sql = "UPDATE login_history SET login_count = login_count + 1, lastest_login = CURRENT_TIMESTAMP WHERE userID = ?";
+				PreparedStatement pst1 = c.prepareStatement(sql);
+				pst1.setInt(1, userID);
+				result = pst1.executeUpdate();
+			} else {
+				sql = "INSERT INTO login_history VALUES(?, default, default)";
+				PreparedStatement pst1 = c.prepareStatement(sql);
+				pst1.setInt(1, userID);
+				result = pst1.executeUpdate();
+			}
+			sql = "UPDATE users SET online = 0 WHERE id = ?";
+			pst = c.prepareStatement(sql);
+			pst.setInt(1, userID);
+			pst.executeUpdate();
+		} catch (SQLException e) {
+			System.err.println("Update Login History Exception: " + e);
+		} finally {
+			DBUtility.closeConnection(c);
+		}
+		return result;
+	}
+
+	public static boolean isAccountExisted(String email) {
+		boolean isExisted = false;
+		Connection c = DBUtility.getConnection();
+		String sql = "SELECT * FROM users WHERE email = ?";
+		try {
+			PreparedStatement pst = c.prepareStatement(sql);
+			pst.setString(1, email);
+			ResultSet rs = pst.executeQuery();
+			if (rs.next()) {
+				isExisted = true;
+			}
+		} catch (SQLException e) {
+			e.printStackTrace();
+		} finally {
+			DBUtility.closeConnection(c);
+		}
+		return isExisted;
+	}
+
+	public static int registerAccount(String firstName, String lastName,
+			String email, String password) {
+		int result = -1;
+		Connection c = DBUtility.getConnection();
+		String sql = "INSERT INTO users VALUES (default, ?, ?, ?, ?)";
+		try {
+			PreparedStatement pst = c.prepareStatement(sql);
+			pst.setString(1, email);
+			pst.setString(2, password);
+			pst.setString(3, firstName);
+			pst.setString(4, lastName);
+			result = pst.executeUpdate();
+		} catch (SQLException e) {
+			e.printStackTrace();
+		} finally {
+			DBUtility.closeConnection(c);
+		}
+		return result;
+	}
 
 	/**
 	 * Add information about user tagged a bookmark
@@ -111,16 +221,7 @@ public class UserSQL {
 					tags.add(rs1.getString(1));
 				}
 				b.setTags(tags);
-				sql1 = "SELECT rating FROM user_rating WHERE userID = ? AND bookmarkID = ?";
-				pst1 = c.prepareStatement(sql1);
-				pst1.setInt(1, userID);
-				pst1.setInt(2, bookmarkID);
-				rs1 = pst1.executeQuery();
-				if (rs1.next()) {
-					b.setRated(rs1.getDouble(1));
-				} else {
-					b.setRated(0);
-				}
+				b.setRated(UserSQL.getRateByUserID(userID, bookmarkID));
 				bookmarks.add(b);
 			}
 		} catch (SQLException e) {
@@ -141,17 +242,17 @@ public class UserSQL {
 		try {
 			PreparedStatement pst = c.prepareStatement(sql);
 			pst.setInt(1, userID);
-			System.out.println(pst.toString());
 			ResultSet rs = pst.executeQuery();
 			while (rs.next()) {
 				TagWeight t = new TagWeight(rs.getString(1), rs.getInt(2));
-				System.out.println(t);
 				mostUsedTags.add(t);
 			}
 		} catch (SQLException e) {
 			System.out.println("Get Most Used Tags: " + e);
+		} finally {
+			DBUtility.closeConnection(c);
 		}
-		//
+
 		return mostUsedTags;
 	}
 
@@ -163,13 +264,14 @@ public class UserSQL {
 			PreparedStatement pst = c.prepareStatement(sql);
 			pst.setString(1, firstName);
 			pst.setString(2, lastName);
-			System.out.println(pst.toString());
 			ResultSet rs = pst.executeQuery();
 			if (rs.next()) {
 				userID = rs.getInt(1);
 			}
 		} catch (SQLException e) {
 			System.out.println("Get User ID: " + e);
+		} finally {
+			DBUtility.closeConnection(c);
 		}
 		return userID;
 	}
@@ -194,6 +296,8 @@ public class UserSQL {
 			}
 		} catch (SQLException e) {
 			System.err.println("Get Tags Subscription: " + e);
+		} finally {
+			DBUtility.closeConnection(c);
 		}
 		return tagSubscription;
 	}
@@ -294,6 +398,8 @@ public class UserSQL {
 			}
 		} catch (SQLException e) {
 			System.out.println("Get Recommend Users: " + e);
+		} finally {
+			DBUtility.closeConnection(c);
 		}
 		/* Kiểm tra theo số lượng topic giống nhau */
 		Collections.sort(recommendUsers, new Comparator<RecommendUser>() {
@@ -326,6 +432,8 @@ public class UserSQL {
 			c.close();
 		} catch (SQLException e) {
 			System.out.println("Get most interested topics: " + e);
+		} finally {
+			DBUtility.closeConnection(c);
 		}
 
 		return mostInterestedTopics;
@@ -356,7 +464,7 @@ public class UserSQL {
 			System.out.println("Check Follow: " + e);
 		} finally {
 			DBUtility.closeConnection(c);
-		}
+		} 
 
 		return isFollowed;
 	}
@@ -401,7 +509,6 @@ public class UserSQL {
 			ResultSet rs = pst.executeQuery();
 			while (rs.next()) {
 				AdvanceBookmark b = new AdvanceBookmark();
-				List<String> tags = new ArrayList<String>();
 				int bookmarkID = rs.getInt(1);
 				b.setBookmarkID(bookmarkID);
 				b.setPostedUserID(rs.getInt(6));
@@ -413,44 +520,11 @@ public class UserSQL {
 				b.setCopyTimes(rs.getInt(10));
 				System.out.println(isFollowed(userID, rs.getInt(6)));
 				b.setFriend(isFollowed(userID, rs.getInt(6)));
-				String sql1 = "SELECT tag_content FROM user_tag_bookmark utb, tags_new t "
-						+ "WHERE userID = ? AND bookmarkID = ? AND utb.tagID = t.tagID";
-				PreparedStatement pst1 = c.prepareStatement(sql1);
-				pst1.setInt(1, rs.getInt(6));
-				pst1.setInt(2, bookmarkID);
-				ResultSet rs1 = pst1.executeQuery();
-				while (rs1.next()) {
-					tags.add(rs1.getString(1));
-				}
-				b.setTags(tags);
-				sql1 = "SELECT first_name, last_name FROM users WHERE id = ?";
-				pst1 = c.prepareStatement(sql1);
-				pst1.setInt(1, rs.getInt(6));
-				rs1 = pst1.executeQuery();
-				if (rs1.next()) {
-					b.setFirstName(rs1.getString(1));
-					b.setLastName(rs1.getString(2));
-				}
-				sql1 = "SELECT rating FROM user_rating WHERE userID = ? AND bookmarkID = ?";
-				pst1 = c.prepareStatement(sql1);
-				pst1.setInt(1, userID);
-				pst1.setInt(2, bookmarkID);
-				rs1 = pst1.executeQuery();
-				if (rs1.next()) {
-					b.setRated(rs1.getDouble(1));
-				} else {
-					b.setRated(0);
-				}
-				sql1 = "SELECT * FROM user_copy WHERE userID = ? AND bookmarkID = ?";
-				pst1 = c.prepareStatement(sql1);
-				pst1.setInt(1, userID);
-				pst1.setInt(2, bookmarkID);
-				rs1 = pst1.executeQuery();
-				if (rs1.next()) {
-					b.setCopied(true);
-				} else {
-					b.setCopied(false);
-				}
+				b.setTags(BookmarkSQL.getTaggedTags(bookmarkID, rs.getInt(6)));
+				b.setFirstName(UserSQL.getFirstNameByID(rs.getInt(6)));
+				b.setLastName(UserSQL.getLastNameByID(rs.getInt(6)));
+				b.setRated(getRateByUserID(userID, bookmarkID));
+				b.setCopied(BookmarkSQL.isCopied(userID, bookmarkID));
 				bookmarks.add(b);
 			}
 		} catch (SQLException e) {
@@ -501,7 +575,7 @@ public class UserSQL {
 					pst.setString(i + 2, deletedTags.get(i));
 				}
 				result = pst.executeUpdate();
-				if(result < 1) {
+				if (result < 1) {
 					System.err.println("Delete subscription tags fail!");
 				}
 			} catch (SQLException e) {
@@ -510,6 +584,132 @@ public class UserSQL {
 		} else {
 			System.out.println("Deleted subscription tags is empty");
 		}
+
+		DBUtility.closeConnection(c);
 		return result;
+	}
+
+	public static OnlineHistory getLoginHistory(int userID) {
+		OnlineHistory history = new OnlineHistory();
+		Connection c = DBUtility.getConnection();
+		String sql = "SELECT * FROM login_history WHERE userID = ?";
+		try {
+			PreparedStatement pst = c.prepareStatement(sql);
+			pst.setInt(1, userID);
+			ResultSet rs = pst.executeQuery();
+			if (rs.next()) {
+				history.setUserID(userID);
+				history.setOnlineCount(rs.getInt(2));
+				history.setLastedOnline((new Date(rs.getTimestamp(3).getTime()))
+						.toString());
+			}
+		} catch (SQLException e) {
+			System.err.println("Get Login History Exception : " + e);
+		} finally {
+			DBUtility.closeConnection(c);
+		}
+		return history;
+	}
+
+	public static int onlineUsers() {
+		int onlineUsers = -1;
+		Connection c = DBUtility.getConnection();
+		String sql = "SELECT COUNT(online) FROM users WHERE online = 1";
+		try {
+			PreparedStatement pst = c.prepareStatement(sql);
+			ResultSet rs = pst.executeQuery();
+			if (rs.next()) {
+				onlineUsers = rs.getInt(1);
+			}
+		} catch (SQLException e) {
+			System.err.println("Get Online Users Exception: " + e);
+		} finally {
+			DBUtility.closeConnection(c);
+		}
+
+		return onlineUsers;
+	}
+
+	public static List<SearchUser> search(String searchInput, int userID) {
+		List<SearchUser> users = new ArrayList<SearchUser>();
+		String search = searchInput.substring(1).trim();
+		Connection c = DBUtility.getConnection();
+		String sql = "SELECT * FROM users WHERE ( lower(email) LIKE '%"
+				+ search + "%' OR lower(first_name) LIKE '%" + search + "%' "
+				+ "OR lower(last_name) LIKE '%" + search + "%') AND id <> ?";
+		try {
+			PreparedStatement pst = c.prepareStatement(sql);
+			pst.setInt(1, userID);
+			ResultSet rs = pst.executeQuery();
+			while (rs.next()) {
+				SearchUser u = new SearchUser();
+				int targetID = rs.getInt(1);
+				u.setUserID(targetID);
+				u.setFirstName(rs.getString(4));
+				u.setLastName(rs.getString(5));
+				if (rs.getInt(6) == 1) {
+					u.setOnline(true);
+				} else {
+					u.setOnline(false);
+				}
+				u.setMostUsedTags(getMostUsedTags(targetID));
+				u.setFollowed(isFollowed(userID, targetID));
+				User user = userStatistic(targetID);
+				u.setFollowerCount(user.getFollowerCount());
+				u.setFollowingCount(user.getFollowingCount());
+				u.setBookmarkCount(user.getBookmarkCount());
+				users.add(u);
+			}
+		} catch (SQLException e) {
+			System.err.println("Search User Exception: " + e);
+		} finally {
+			DBUtility.closeConnection(c);
+		}
+
+		return users;
+	}
+
+	public static double getRateByUserID(int userID, int bookmarkID) {
+		double rated = 0;
+		Connection c = DBUtility.getConnection();
+		String sql = "SELECT rating FROM user_rating WHERE userID = ? AND bookmarkID = ?";
+		try {
+			PreparedStatement pst = c.prepareStatement(sql);
+			pst.setInt(1, userID);
+			pst.setInt(2, bookmarkID);
+			ResultSet rs = pst.executeQuery();
+			if (rs.next()) {
+				rated = rs.getDouble(1);
+			}
+		} catch (SQLException e) {
+			System.err.println("Get Rate by UserID: " + e);
+		} finally {
+			DBUtility.closeConnection(c);
+		}
+
+		return rated;
+	}
+
+	public static List<TagWeight> getAllUsedTags(int userID) {
+		List<TagWeight> usedTags = new ArrayList<TagWeight>();
+		Connection c = DBUtility.getConnection();
+		String sql = "SELECT tag_content, tag_weight FROM user_tag, tags_new "
+				+ "WHERE userID = ? AND user_tag.tagID = tags_new.tagID "
+				+ "ORDER BY tag_weight DESC";
+		try {
+			PreparedStatement pst = c.prepareStatement(sql);
+			pst.setInt(1, userID);
+			ResultSet rs = pst.executeQuery();
+			while (rs.next()) {
+				TagWeight t = new TagWeight(rs.getString(1), rs.getInt(2));
+				usedTags.add(t);
+			}
+		} catch (SQLException e) {
+			System.out.println("Get Most Used Tags: " + e);
+		} finally {
+			DBUtility.closeConnection(c);
+		}
+
+		return usedTags;
 	}
 }

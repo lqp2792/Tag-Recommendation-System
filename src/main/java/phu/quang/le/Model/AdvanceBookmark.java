@@ -11,6 +11,7 @@ public class AdvanceBookmark {
 	private String url;
 	private String title;
 	private List<String> tags;
+	private List<String> sameTags;
 	private Date date;
 	private int copyTimes;
 	private int viewTimes;
@@ -18,7 +19,9 @@ public class AdvanceBookmark {
 	private double rated;
 	private boolean isFriend;
 	private boolean isCopied;
-	
+	private double point;
+	private int ratedTimes;
+
 	public String getUrl() {
 		return url;
 	}
@@ -129,6 +132,30 @@ public class AdvanceBookmark {
 
 	public void setCopied(boolean isCopied) {
 		this.isCopied = isCopied;
+	}
+
+	public double getPoint() {
+		return point;
+	}
+
+	public void setPoint(double point) {
+		this.point = point;
+	}
+
+	public int getRatedTimes() {
+		return ratedTimes;
+	}
+
+	public void setRatedTimes(int ratedTimes) {
+		this.ratedTimes = ratedTimes;
+	}
+
+	public List<String> getSameTags() {
+		return sameTags;
+	}
+
+	public void setSameTags(List<String> sameTags) {
+		this.sameTags = sameTags;
 	}
 
 }

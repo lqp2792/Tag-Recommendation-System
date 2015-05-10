@@ -37,6 +37,8 @@ public class TagSQL {
 			}
 		} catch (SQLException e) {
 			System.err.println("Check Tag Existed: " + e);
+		} finally {
+			DBUtility.closeConnection(c);
 		}
 		//
 		return tagID;
@@ -106,8 +108,9 @@ public class TagSQL {
 			}
 		} catch (SQLException e) {
 			System.err.println("Add tag to DB: " + e);
+		} finally {
+			DBUtility.closeConnection(c);
 		}
-		//
 		return tagID;
 	}
 
@@ -138,6 +141,8 @@ public class TagSQL {
 			}
 		} catch (SQLException e) {
 			System.err.println("Add Tag to Bookmark: " + e);
+		} finally {
+			DBUtility.closeConnection(c);
 		}
 		//
 		return result;
@@ -156,14 +161,14 @@ public class TagSQL {
 			while (rs.next()) {
 				AdditionalTag additionalTag = new AdditionalTag();
 				List<String> tags = new ArrayList<String>();
-				sql = "SELECT first_name, last_name FROM users WHERE id = ?";
+				sql = "SELECT * FROM users WHERE id = ?";
 				PreparedStatement pst1 = c.prepareStatement(sql);
 				pst1.setInt(1, rs.getInt(1));
 				ResultSet rs1 = pst1.executeQuery();
 				if (rs1.next()) {
 					additionalTag.setUserID(rs.getInt(1));
-					additionalTag.setFirstName(rs1.getString(1));
-					additionalTag.setLastName(rs1.getString(2));
+					additionalTag.setFirstName(rs1.getString(4));
+					additionalTag.setLastName(rs1.getString(5));
 				}
 				sql = "SELECT t.tag_content FROM tags_new t, user_tag_bookmark ut WHERE ut.userId = ? AND ut.bookmarkID = ? AND ut.tagID = t.tagID";
 				pst1 = c.prepareStatement(sql);
@@ -263,7 +268,7 @@ public class TagSQL {
 			PreparedStatement pst = c.prepareStatement(sql);
 			ResultSet rs = pst.executeQuery();
 			int count = 0;
-			while(rs.next() && count < 15) {
+			while (rs.next() && count < 15) {
 				TagWeight tw = new TagWeight(rs.getString(1), rs.getInt(2));
 				tagWeights.add(tw);
 				count++;
@@ -274,5 +279,112 @@ public class TagSQL {
 			DBUtility.closeConnection(c);
 		}
 		return tagWeights;
+	}
+
+	/**
+	 * Find a list of sorted Bookmarks by Tag
+	 * 
+	 * @param searchInput
+	 * @param userID
+	 * @param sortBy
+	 * @return
+	 */
+	public static List<AdvanceBookmark> search(String searchInput, int userID,
+			int sortBy) {
+		searchInput = searchInput.toLowerCase().substring(1);
+		CompareUltility compareUltility = new CompareUltility(sortBy, userID);
+		Connection c = DBUtility.getConnection();
+		String sql = "SELECT b.* FROM bookmarks_new b, bookmark_tags_new bt, tags_new t WHERE userID <> ? "
+				+ "AND b.bookmarkID = bt.bookmarkID AND bt.tagID = t.tagID AND t.tag_content = ?";
+		try {
+			PreparedStatement pst = c.prepareStatement(sql);
+			pst.setInt(1, userID);
+			pst.setString(2, searchInput);
+			ResultSet rs = pst.executeQuery();
+			while (rs.next()) {
+				AdvanceBookmark bookmark = new AdvanceBookmark();
+				bookmark.setBookmarkID(rs.getInt(1));
+				bookmark.setPostedUserID(rs.getInt(6));
+				bookmark.setFirstName(UserSQL.getFirstNameByID(rs.getInt(6)));
+				bookmark.setLastName(UserSQL.getLastNameByID(rs.getInt(6)));
+				bookmark.setUrl(rs.getString(2));
+				bookmark.setTitle(rs.getString(3));
+				bookmark.setTags(BookmarkSQL.getTaggedTags(rs.getInt(1),
+						rs.getInt(6)));
+				bookmark.setSameTags(BookmarkSQL.sameTags(
+						UserSQL.getAllUsedTags(userID), bookmark.getTags()));
+				bookmark.setDate(rs.getDate(7));
+				bookmark.setCopyTimes(rs.getInt(10));
+				bookmark.setViewTimes(rs.getInt(8));
+				bookmark.setTotalRating(rs.getDouble(9));
+				bookmark.setRated(UserSQL.getRateByUserID(userID, rs.getInt(1)));
+				bookmark.setFriend(UserSQL.isFollowed(userID, rs.getInt(6)));
+				bookmark.setCopied(BookmarkSQL.isCopied(userID, rs.getInt(1)));
+				bookmark.setPoint(0);
+				bookmark.setRatedTimes(BookmarkSQL.getRatedTimes(rs.getInt(1)));
+				compareUltility.calculatePoint(bookmark);
+				compareUltility.toString();
+			}
+			compareUltility.sort();
+		} catch (SQLException e) {
+			System.err.println("Search Tag Exception: " + e);
+		} finally {
+			DBUtility.closeConnection(c);
+		}
+		return compareUltility.sortedBookmarks;
+	}
+
+	public static int deleteOtherTag(int userID, int bookmarkID, String tag) {
+		int result = -1;
+		int tagID = isTagExisted(tag);
+		Connection c = DBUtility.getConnection();
+		String sql = "DELETE FROM user_tag_bookmark WHERE userID = ? AND bookmarkID = ? AND tagID = ?";
+		try {
+			PreparedStatement pst = c.prepareStatement(sql);
+			pst.setInt(1, userID);
+			pst.setInt(2, bookmarkID);
+			pst.setInt(3, tagID);
+			result = pst.executeUpdate();
+			sql = "SELECT * FROM user_tag WHERE userID = ? AND tagID = ?";
+			pst = c.prepareStatement(sql);
+			pst.setInt(1, userID);
+			pst.setInt(2, tagID);
+			ResultSet rs = pst.executeQuery();
+			if (rs.next()) {
+				String sql1 = null;
+				if (rs.getInt(3) > 1) {
+					sql1 = "UPDATE user_tag SET tag_weight = tag_weight - 1 WHERE userID = ? AND tagID = ?";
+				} else {
+					sql1 = "DELETE TOP 1 FROM user_tag WHERE userID = ? AND tagID = ?";
+				}
+				PreparedStatement pst1 = c.prepareStatement(sql1);
+				pst1.setInt(1, userID);
+				pst1.setInt(2, tagID);
+				result = pst1.executeUpdate();
+			}
+			sql = "SELECT * FROM bookmark_tags_new WHERE bookmarkID = ? AND tagID = ?";
+			pst = c.prepareStatement(sql);
+			pst.setInt(1, bookmarkID);
+			pst.setInt(2, tagID);
+			rs = pst.executeQuery();
+			if (rs.next()) {
+				String sql1 = null;
+				if (rs.getInt(3) > 1) {
+					sql1 = "UPDATE bookmark_tags_new SET tag_weight = tag_weight - 1 WHERE bookmarkID = ? AND tagID = ?";
+				} else {
+					sql1 = "DELETE TOP 1 FROM bookmark_tags_new WHERE bookmarkID = ? AND tagID = ?";
+				}
+				PreparedStatement pst1 = c.prepareStatement(sql1);
+				pst1.setInt(1, bookmarkID);
+				pst1.setInt(2, tagID);
+				result = pst1.executeUpdate();
+			}
+		} catch (SQLException e) {
+			System.err.println("Delete Other Tag Exception: " + e);
+		} finally {
+			DBUtility.closeConnection(c);
+		}
+
+		return result;
 	}
 }

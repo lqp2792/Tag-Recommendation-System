@@ -10,6 +10,7 @@ import java.util.List;
 
 import phu.quang.le.Model.AdvanceBookmark;
 import phu.quang.le.Model.RateResult;
+import phu.quang.le.Model.TagWeight;
 import phu.quang.le.Model.Topic;
 
 /**
@@ -36,10 +37,10 @@ public class BookmarkSQL {
 			String urlKeywords, String urlDescription, int userID) {
 		int result = -1;
 		int bookmarkID = -1;
-		Connection connection = DBUtility.getConnection();
+		Connection c = DBUtility.getConnection();
 		String sql = "INSERT INTO bookmarks_new VALUES (default, ?, ?, ?, ?, ?, NOW(), default, default, default)";
 		try {
-			PreparedStatement pst = connection.prepareStatement(sql,
+			PreparedStatement pst = c.prepareStatement(sql,
 					Statement.RETURN_GENERATED_KEYS);
 			pst.setString(1, url);
 			pst.setString(2, title);
@@ -57,6 +58,8 @@ public class BookmarkSQL {
 			}
 		} catch (SQLException e) {
 			System.err.println("Add Bookmark to DB " + e);
+		} finally {
+			DBUtility.closeConnection(c);
 		}
 		return bookmarkID;
 	}
@@ -82,6 +85,8 @@ public class BookmarkSQL {
 			}
 		} catch (SQLException e) {
 			System.err.println("Check bookmark already has tag: " + e);
+		} finally {
+			DBUtility.closeConnection(c);
 		}
 		//
 		return tagWeight;
@@ -109,6 +114,8 @@ public class BookmarkSQL {
 			}
 		} catch (SQLException e) {
 			System.err.println("Add Bookmark Topics: " + e);
+		} finally {
+			DBUtility.closeConnection(c);
 		}
 		return result;
 	}
@@ -219,6 +226,8 @@ public class BookmarkSQL {
 			}
 		} catch (SQLException e) {
 			System.err.println("Discover Bookmark: " + e);
+		} finally {
+			DBUtility.closeConnection(c);
 		}
 		return bookmarks;
 	}
@@ -293,8 +302,8 @@ public class BookmarkSQL {
 				pst1.setInt(2, bookmarkID);
 				pst1.setDouble(3, rating);
 				pst1.executeUpdate();
-				ratedTimes++;
-				totalRating = (totalRating + rating) / ratedTimes;
+				totalRating = (totalRating * ratedTimes + rating)
+						/ (ratedTimes + 1);
 			}
 			sql = "UPDATE bookmarks_new SET rating = ? WHERE bookmarkID = ?";
 			pst = c.prepareStatement(sql);
@@ -550,10 +559,12 @@ public class BookmarkSQL {
 			pst.setInt(1, userID);
 			pst.setInt(2, bookmarkID);
 			result = pst.executeUpdate();
-			if (result == 0) {
+			if (result != 0) {
 				ResultSet rs = pst.getGeneratedKeys();
 				if (rs.next()) {
-					bookmarkID = (int) rs.getLong(1);
+					copiedBookmarkID = (int) rs.getLong(1);
+					System.out.println("New Copied BookmarkID: "
+							+ copiedBookmarkID);
 				}
 			}
 			sql = "INSERT INTO user_copy VALUES (?, ?, NOW(), ?)";
@@ -568,6 +579,8 @@ public class BookmarkSQL {
 			result = pst.executeUpdate();
 		} catch (SQLException e) {
 			e.printStackTrace();
+		} finally {
+			DBUtility.closeConnection(c);
 		}
 
 		return result;
@@ -603,6 +616,8 @@ public class BookmarkSQL {
 			result = pst.executeUpdate();
 		} catch (SQLException e) {
 			e.printStackTrace();
+		} finally {
+			DBUtility.closeConnection(c);
 		}
 
 		return result;
@@ -635,5 +650,85 @@ public class BookmarkSQL {
 		}
 
 		return trendingBookmarks;
+	}
+
+	public static void search(String searchInput) {
+
+	}
+
+	public static boolean isCopied(int userID, int bookmarkID) {
+		boolean isCopied = false;
+		Connection c = DBUtility.getConnection();
+		String sql = "SELECT * FROM user_copy WHERE userID = ? AND bookmarkID = ?";
+		try {
+			PreparedStatement pst = c.prepareStatement(sql);
+			pst.setInt(1, userID);
+			pst.setInt(2, bookmarkID);
+			ResultSet rs = pst.executeQuery();
+			if (rs.next()) {
+				isCopied = true;
+			}
+		} catch (SQLException e) {
+			System.err.println("Is Copied Check Exception: " + e);
+		} finally {
+			DBUtility.closeConnection(c);
+		}
+
+		return isCopied;
+	}
+
+	public static int getRatedTimes(int bookmarkID) {
+		int ratedTimes = -1;
+		Connection c = DBUtility.getConnection();
+		String sql = "SELECT COUNT(bookmarkID) FROM user_rating WHERE bookmarkID = ?";
+		try {
+			PreparedStatement pst = c.prepareStatement(sql);
+			pst.setInt(1, bookmarkID);
+			ResultSet rs = pst.executeQuery();
+			if (rs.next()) {
+				ratedTimes = rs.getInt(1);
+			}
+		} catch (SQLException e) {
+			System.err.println("Get Rated Times Exception: " + e);
+		} finally {
+			DBUtility.closeConnection(c);
+		}
+		return ratedTimes;
+	}
+
+	public static List<String> getTaggedTags(int bookmarkID, int userID) {
+		List<String> taggedTags = new ArrayList<String>();
+		Connection c = DBUtility.getConnection();
+		String sql = "SELECT tag_content FROM user_tag_bookmark utb, tags_new t "
+				+ "WHERE userID = ? AND bookmarkID = ? AND utb.tagID = t.tagID";
+
+		try {
+			PreparedStatement pst = c.prepareStatement(sql);
+			pst.setInt(1, userID);
+			pst.setInt(2, bookmarkID);
+			ResultSet rs = pst.executeQuery();
+			while (rs.next()) {
+				taggedTags.add(rs.getString(1));
+			}
+		} catch (SQLException e) {
+			e.printStackTrace();
+		} finally {
+			DBUtility.closeConnection(c);
+		}
+
+		return taggedTags;
+	}
+
+	public static List<String> sameTags(List<TagWeight> usedTags,
+			List<String> taggedTags) {
+		List<String> sameTags = new ArrayList<String>();
+		for (int i = 0; i < usedTags.size(); i++) {
+			for (int j = 0; j < taggedTags.size(); j++) {
+				if (usedTags.get(i).getTag().equals(taggedTags.get(j))) {
+					sameTags.add(taggedTags.get(j));
+				}
+			}
+		}
+		return sameTags;
 	}
 }

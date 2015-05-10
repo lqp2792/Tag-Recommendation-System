@@ -23,38 +23,50 @@ public class LoginController {
 
 	@RequestMapping(value = "/login", method = RequestMethod.POST)
 	public @ResponseBody JsonResponse processLogin(@RequestParam String email,
-			@RequestParam String password, HttpServletRequest request)
-			throws SQLException {
+			@RequestParam String password, HttpServletRequest request) {
 		JsonResponse rs = new JsonResponse();
 		HttpSession session = request.getSession();
 		Connection c = DBUtility.getConnection();
 		String sql = "SELECT * FROM users WHERE email = ? AND password = ?";
-		PreparedStatement pst = c.prepareStatement(sql);
-		pst.setString(1, email);
-		pst.setString(2, password);
-		ResultSet result = pst.executeQuery();
-		if (!result.next()) {
-			rs.setStatus("FAIL");
-			rs.setResult("Password or email is wrong!");
-		} else {
-			rs.setStatus("SUCCESS");
-			String firstName = result.getString(4);
-			String lastName = result.getString(5);
-			session.setAttribute("email", email);
-			session.setAttribute("firstName", firstName);
-			session.setAttribute("lastName", lastName);
-			session.setAttribute("userID",
-					UserSQL.getUserID(firstName, lastName));
-			rs.setResult("Login Successful");
+		try {
+			PreparedStatement pst = c.prepareStatement(sql);
+			pst.setString(1, email);
+			pst.setString(2, password);
+			ResultSet result = pst.executeQuery();
+			if (!result.next()) {
+				rs.setStatus("FAIL");
+				rs.setResult("Password or email is wrong!");
+			} else {
+				rs.setStatus("SUCCESS");
+				String firstName = result.getString(4);
+				String lastName = result.getString(5);
+				session.setAttribute("email", email);
+				session.setAttribute("firstName", firstName);
+				session.setAttribute("lastName", lastName);
+				int userID = UserSQL.getUserID(firstName, lastName);
+				session.setAttribute("userID", userID);
+
+				sql = "UPDATE users SET online = 1 WHERE id = ?";
+				pst = c.prepareStatement(sql);
+				pst.setInt(1, userID);
+				pst.executeUpdate();
+				rs.setResult("Login Successful");
+			}
+		} catch (SQLException e) {
+			System.err.println("Login Exception: " + e);
+		} finally {
+			DBUtility.closeConnection(c);
 		}
+
 		return rs;
 	}
 
 	@RequestMapping(value = "/logout", method = RequestMethod.POST)
-	public @ResponseBody JsonResponse processLogout(HttpServletRequest request)
+	public @ResponseBody JsonResponse processLogout(HttpSession session)
 			throws SQLException {
 		JsonResponse rs = new JsonResponse();
-		HttpSession session = request.getSession();
+		Integer userID = new Integer((int) session.getAttribute("userID"));
+		UserSQL.updateLoginHistory(userID);
 		session.invalidate();
 		System.out.println("Log out");
 		return rs;

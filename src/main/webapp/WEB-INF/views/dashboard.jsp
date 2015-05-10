@@ -12,6 +12,8 @@
 <meta name="description" content="">
 <meta name="author" content="">
 <title>Social Bookmarking System</title>
+<link rel="stylesheet" type="text/css"
+	href="http://fonts.googleapis.com/css?family=Vollkorn">
 <link href="css/bootstrap.min.css" rel="stylesheet">
 <link href="css/metisMenu.min.css" rel="stylesheet">
 <link href="css/sb-admin-2.css" rel="stylesheet">
@@ -21,16 +23,13 @@
 <link href="css/font-awesome.css" rel="stylesheet" type="text/css">
 <link href="css/star-rating.css" rel="stylesheet" media="all"
 	type="text/css" />
+<link href="css/introjs.css" rel="stylesheet">
+<link href="css/introjs-nazanin.css" rel="stylesheet">
+<link href="css/animate.css" rel="stylesheet">
 </head>
 <script>
-var availableTags = [];
 <c:if test="${sessionScope.sortBy != null}">
 	var sortBy = <c:out value="${sessionScope.sortBy}"/>;
-</c:if>
-<c:if test="${sessionScope.availableTags != null}">
-	<c:forEach var="tag" items="${sessionScope.availableTags}">
-		availableTags.push('<c:out value="${tag}" />');
-	</c:forEach>
 </c:if>
 </script>
 <body>
@@ -45,11 +44,14 @@ var availableTags = [];
 						class="icon-bar"></span> <span class="icon-bar"></span> <span
 						class="icon-bar"></span>
 				</button>
-				<a class="navbar-brand" href="."><c:out
-						value="${firstName} ${lastName}" /></a>
+				<input type="hidden" class="userID" name="userID"
+					value="<c:out value="${userID}" />" /> <a class="navbar-brand"
+					href="."><c:out value="${firstName} ${lastName}" /></a>
 			</div>
 			<!-- /.navbar-header -->
 			<ul class="nav navbar-top-links navbar-right">
+				<li id="feed-back" data-toggle="modal" data-target="#feedback-modal"><a
+					href="#"><i class="fa fa-comments-o"></i> Feedback</a></li>
 				<li class="active" id="log-out"><a href="#">Log out</a></li>
 			</ul>
 			<!-- /.navbar-top-links -->
@@ -64,7 +66,8 @@ var availableTags = [];
 									data-original-title="Search tips: <br/> - #tagname - Search a specific tag <br/>
 									 - @username - Search a specific user <br /> - keyword - Search a specific keyword<br/>">
 								<span class="input-group-btn">
-									<button class="btn btn-default" type="button">
+									<button id="search-button" class="btn btn-default"
+										type="button">
 										<i class="fa fa-search"></i>
 									</button>
 								</span>
@@ -73,7 +76,7 @@ var availableTags = [];
 						<li><a href="#" id="my-bookmarks-menu"><i
 								class="fa fa-align-justify fa-fw"></i> My Bookmarks</a></li>
 						<li><a href="network" id="network-menu"><i
-								class="fa fa-users fa-fw"></i> Network</a>
+								class="fa fa-users fa-fw"></i> Network</a></li>
 						<li><a href="discover" id="discover-menu"><i
 								class="fa fa-globe fa-fw"></i> Discover</a></li>
 						<li><a href="trending" id="trending-menu"><i
@@ -101,6 +104,7 @@ var availableTags = [];
 								style="min-height: 100px; height: 100px;">
 						</div>
 						<div class="col-lg-10">
+
 							<h2>
 								<c:out value="${firstName} ${lastName}" />
 							</h2>
@@ -149,7 +153,7 @@ var availableTags = [];
 						<div class="row row-centered">
 							<c:if test="${not empty recommendUsers}">
 								<c:forEach var="recommendUser" items="${recommendUsers}">
-									<div class="col-md-15 col-sm-3 col-centered">
+									<div class="col-md-15 col-sm-3 col-centered user">
 										<div class="thumbnail clearfix">
 											<img src="images/user.png" class="pull-left"
 												alt="User Default Avatar"
@@ -225,7 +229,8 @@ var availableTags = [];
 									<c:if test="${tagWeight.weight < 5}">
 										<li><a href="#" style="font-size: 10px">${tagWeight.tag}</a></li>
 									</c:if>
-									<c:if test="${(tagWeight.weight >= 5) && (tagWeight.weight < 10)}">
+									<c:if
+										test="${(tagWeight.weight >= 5) && (tagWeight.weight < 10)}">
 										<li><a href="#" style="font-size: 15px">${tagWeight.tag}</a></li>
 									</c:if>
 									<c:if test="${(tagWeight.weight >= 10)}">
@@ -440,7 +445,52 @@ var availableTags = [];
 				</div>
 			</div>
 		</div>
-
+		<!-- Mở Modal Window Feedback  -->
+		<div class="modal fade" id="feedback-modal" tabindex="-1"
+			role="dialog" aria-labelledby="feedbackModalLabel" aria-hidden="true">
+			<div class="modal-dialog">
+				<div class="modal-content">
+					<div class="modal-header">
+						<button type="button" class="close" data-dismiss="modal"
+							aria-label="Close">
+							<span aria-hidden="true">&times;</span>
+						</button>
+						<h4 class="modal-title text-center">Send Feedback</h4>
+					</div>
+					<div class="modal-body">
+						<form role="form" id="feedback-form">
+							<div class="row">
+								<div class="col-xs-2">
+									<p class="text-info">
+										<strong>Name :</strong>
+									</p>
+								</div>
+								<div class="col-xs-10">
+									<p>
+										<c:out value="${firstName} ${lastName}" />
+									</p>
+								</div>
+							</div>
+							<br />
+							<div class="row">
+								<div class="col-xs-2">
+									<p class="text-info">
+										<strong>Problem : </strong>
+									</p>
+								</div>
+								<div class="col-xs-10">
+									<textarea class="form-control" id="feedback-area" rows="5"
+										placeholder="What problem are you encountering? Which way you want me to improve Website?"
+										style="resize: none"></textarea>
+								</div>
+							</div>
+							<br />
+							<button type="submit" class="btn btn-info btn-block">Send</button>
+						</form>
+					</div>
+				</div>
+			</div>
+		</div>
 		<!-- Subscription tags -->
 		<div class="modal fade" id="subscription-modal" tabindex="-1"
 			role="dialog" aria-labelledby="subscriptionModalLabel"
@@ -479,7 +529,10 @@ var availableTags = [];
 	<script src="js/metisMenu.min.js"></script>
 	<script src="js/sb-admin-2.js"></script>
 	<script src="js/bootbox.js"></script>
-	<script src="js/panel.js"></script>
+	<script src="js/intro.js"></script>
 	<script src="js/star-rating.js"></script>
+	<script src="js/jquery.lettering.js"></script>
+	<script src="js/jquery.textillate.js"></script>
+	<script src="js/panel.js"></script>
 </body>
 </html>

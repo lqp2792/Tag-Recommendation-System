@@ -40,10 +40,10 @@
 				<div class="tlt-p p_c" data-in-effect="fadeIn">
 					<ul class="texts">
 						<li>A centralized online service which enables users to add,
-							 annotate, edit <br />and share bookmarks of web documents
+							annotate, edit <br />and share bookmarks of web documents
 						</li>
 						<li>The task of predicting folksonomy tags for a given user
-							 and Bookmark, based on <br/>a Topic Model implemented by LDA
+							and Bookmark, based on <br />a Topic Model implemented by LDA
 						</li>
 					</ul>
 				</div>
@@ -75,22 +75,19 @@
 					</button>
 					<h4 class="modal-title text-center" id="loginModalLabel">Log
 						In</h4>
-					<div class="text-danger text-center error-message"></div>
 				</div>
-				<form action="login" method="post" role="form" id="login-form">
+				<form role="form" id="login-form">
 					<div class="modal-body">
 						<div class="form-group">
 							<label for="login-email" class="control-label">Email: </label> <input
 								type="text" class="form-control input-sm " id="login-email"
 								placeholder="Email" />
-							<div class="error-message"></div>
 						</div>
 						<div class="form-group">
 							<label for="login-password" class="control-label">Password:
 							</label> <input type="password" class="
 								form-control input-sm"
 								id="login-password" placeholder="Your Password" />
-							<div class="error-message"></div>
 						</div>
 					</div>
 					<div class="modal-footer">
@@ -118,9 +115,9 @@
 						<div class="row">
 							<div class="col-xs-6 col-sm-6 col-md-6">
 								<div class="form-group">
-									<label for="first-name">First Name: </label> <input type="text"
-										class="form-control input-sm" id="first-name"
-										placeholder="First Name">
+									<label for="first-name" class="control-label">First
+										Name: </label> <input type="text" class="form-control input-sm"
+										id="first-name" placeholder="First Name">
 								</div>
 							</div>
 							<div class="col-xs-6 col-sm-6 col-md-6">
@@ -132,13 +129,13 @@
 							</div>
 						</div>
 						<div class="form-group">
-							<label for="email-register">Email: </label> <input type="text"
-								class="form-control input-sm" id="email-register"
-								placeholder="Your Email" />
+							<label for="email-register" class="control-label">Email:
+							</label> <input type="text" class="form-control input-sm"
+								id="email-register" placeholder="Your Email" />
 						</div>
 						<div class="form-group">
-							<label for="password">Password: </label> <input type="password"
-								class="form-control input-sm" id="password"
+							<label for="password" class="control-label">Password: </label> <input
+								type="password" class="form-control input-sm" id="password"
 								placeholder="Your Password" />
 						</div>
 					</div>
@@ -151,6 +148,7 @@
 	</div>
 	<script src="<c:url value="js/jquery.js"/>"></script>
 	<script src="<c:url value="js/bootstrap.min.js"/>"></script>
+	<script src="<c:url value="js/bootbox.js"/>"></script>
 	<script src="<c:url value="js/fotorama.js"/>"></script>
 	<script src="<c:url value="js/jquery.fittext.js"/>"></script>
 	<script src="<c:url value="js/jquery.lettering.js"/>"></script>

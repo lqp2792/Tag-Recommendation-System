@@ -12,7 +12,7 @@ var totalDiscoverTags = [];
 var taggedTags = [];
 var deletedTags = [];
 /* =============================================== */
-/* === Thay đổi page content, page header == */
+/*        Thay đổi page content, page header       */
 /* =============================================== */
 $(document).ready(function() {
 	if (document.URL.indexOf('dashboard') > -1) {
@@ -27,6 +27,37 @@ $(document).ready(function() {
 	if(document.URL.indexOf('trending') > -1) {
 		accessTrendingPage();
 	}
+	/* =============================================== */
+	/*   Thực hiện chức năng search khi gõ vào input   */
+	/* =============================================== */
+	$('#search-button').click(function(e){
+		offset = 0;
+		processSearch();
+	})
+	$('#search-input').keypress(function (e) {
+	  if (e.which == 13) {
+	    $('#search-button').click();
+	    return false;  
+	  }
+	});
+	/* =============================================== */
+	/*          Auto cập nhật số lương online          */
+	/* =============================================== */
+	setTimeout(updateOnlineUsers, 1000);
+	/* =============================================== */
+	/*      Click Follow / Unfolow người dùng khác     */
+	/* =============================================== */
+	$(document).on('click', '.follow', function(e) {
+		$(this).html('<i class="fa fa-spinner fa-spin"></i> Processing...');
+		follow(this);
+	});
+	/* =============================================== */
+	/*                 Xử lí nhập Feedback             */
+	/* =============================================== */
+	$('#feedback-form').submit(function(e) {
+		e.preventDefault();
+		processFeedback();
+	});
 });
 
 function accessDashboardPage() {
@@ -41,7 +72,7 @@ function accessDashboardPage() {
 			if(data.status == "SUCCESS") {
 				$(content).html('');
 				loadBookmarks(content, data);
-				$(content).append('<div id="loader" style="text-align: center;"><i class="fa fa-spinner fa-spin"></i> LOADING...</div>');
+				$(content).append('<div id="loader" style="text-align: center;"><i class="fa fa-spinner fa-spin"></i> Loading...</div>');
 				offset += 5;
 				infiniteScroll(content);	
 			} 
@@ -51,8 +82,72 @@ function accessDashboardPage() {
 				inner += '</p></div></div>';
 				$(content).html(inner);
 			}	
+		}, error: function(xhr, textStatus, error) {
+		      console.log(xhr.statusText);
+		      console.log(textStatus);
+		      console.log(error);
+		      bootbox.alert('<h4 class="text-center text-danger"><i class="fa fa-exclamation-triangle"></i> Something has happend while communicate!</h4>')
 		}
 	}) ;
+	if (localStorage.getItem('isGuided') === null) {
+		 localStorage.setItem('isGuided', false);
+	}
+	$.ajax({
+		type : 'GET',
+		url : '/TagRecommend/dashboard/history',
+		success : function(data) {
+			if(data.result.onlineCount == 0 && localStorage.isGuided == 'false') {
+				bootbox.alert('<h4 class="text-center text-info">Welcome to my social bookmarking system </h4>' + 
+						'<p class="text-center text-info">Press OK to take a tour to system features</p>', function(e) {
+					 var introguide = introJs();
+					 introguide.setOptions({
+						    steps: [
+						        {
+						          element: '#my-bookmarks-menu',
+						          intro: 'By default, you will be here. This is where you can manage all of your posted Bookmark',
+						          position: 'right'
+						        },
+						        {
+						          element: '#network-menu',
+						          intro: 'By Click here, You can follow other users that were recommend by system, and check their newest Bookmark',
+						          position: 'right'
+						        },
+						        {
+						          element: '#discover-menu',
+						          intro: 'You can choose some Tags, and System will find all Bookmark has that Tag for you. By default, system will use your most used Tags to discover',
+						          position: 'right'
+						        },
+						        {
+						          element: '#trending-menu',
+						          intro: 'Click here, You can see top 10 most used Tags of system, and Top 15 most interested Bookmark of System',
+						          position: 'right'
+						        },
+						        {
+						          element: '#add-bookmark-menu',
+						          intro: 'The most important part of System, You post a Bookmark and annotate with Recommended Tags',
+						          position: 'right'
+						        },
+						        {
+						          element: '#setting-menu',
+						          intro: 'Click here, you can change your password, view system users',
+						          position: 'right'
+						        }
+						    ]
+						});
+					 introguide.start();
+					 localStorage.setItem('isGuided', true);
+				});
+			} 
+			if (data.result.onlineCount >  0 ){
+				$('.text-info').eq(0).after('<h4>Last Online: ' + data.result.lastedOnline + '</h4>');	
+			}
+		}, error: function(xhr, textStatus, error) {
+		      console.log(xhr.statusText);
+		      console.log(textStatus);
+		      console.log(error);
+		      bootbox.alert('<h4 class="text-center text-danger"><i class="fa fa-exclamation-triangle"></i> Something has happend while communicate!</h4>')
+		}
+	});
 }
 
 function accessNetworkPage() {
@@ -82,7 +177,7 @@ function accessNetworkPage() {
 			}
 			if(data.status == "SUCCESS") {
 				loadBookmarks(content, data);
-				$(content).append('<div id="loader" style="text-align: center;"><i class="fa fa-spinner fa-spin"></i> LOADING...</div>');
+				$(content).append('<div id="loader" style="text-align: center;"><i class="fa fa-spinner fa-spin"></i> Loading...</div>');
 				offset += 5;
 				infiniteScroll(content);	
 			} 
@@ -301,26 +396,6 @@ function clickMyBookmarks() {
 	window.location.href = '/TagRecommend/dashboard';
 }
 /* =============================================== */
-/* Click follow người dùng khác */
-/* =============================================== */
-$(document).ready(function() {
-	$('.follow').on("click", function(event) {
-		$(this).html('<i class="fa fa-check-circle"></i> Followed');
-		$('#network-waiting').removeClass('hidden').addClass('show');
-		var col = $(this).closest('col-md-15');
-		$.ajax({
-			type : 'POST',
-			url : '/TagRecommend/network/follow',
-			data : {
-				targetUserID : $('.userID').attr('value')
-			},
-			success : function(data) {
-				window.location.reload(true);
-			}
-		});
-	});
-});
-/* =============================================== */
 /* Scroll Load thêm content */
 /* =============================================== */
 function infiniteScroll(content) {
@@ -364,11 +439,11 @@ function infiniteScroll(content) {
 				loadBookmarks(content, data);
 				$('#loader').remove();
 				if (data.result.length == 5) {
-					$(content).append('<div id="loader" style="text-align: center;"><i class="fa fa-spinner fa-spin"></i> LOADING...</div>');
+					$(content).append('<div id="loader" style="text-align: center;"><i class="fa fa-spinner fa-spin"></i> Loading...</div>');
 					offset += 5;
 				} else {
 					scene.remove();
-					$(content).append('<div class="center-div"><h4><a href="#" id="backToTop"><i class="fa fa-reply"></i> THERE IS NO MORE BOOKMARKS</a></h4></div>');
+					$(content).append('<div class="center-div"><h4><a href="#" id="backToTop"><i class="fa fa-reply"></i> There is no more Bookmarks</a></h4></div>');
 				}
 			}
 		});
@@ -454,7 +529,13 @@ function createRatingChoices(id, rating) {
 				'bookmarkID' : bookmarkID
 			}, success : function(data) {
 				console.log('Total Rating: ' + data.result);
-				$(bookmark).find('.avg-rating').text('Avg Rate: ' + data.result.toFixed(2));
+				var rating = $(bookmark).find('.avg-rating');
+				$(rating).text('Avg Rate: ' + data.result.toFixed(2));
+				$(rating).textillate({
+					autoStart: false,
+					'in' : {effect : 'pulse'}
+				})
+				$(bookmark).find('.avg-rating').textillate('in');
 			}
 		});
 	});
@@ -468,51 +549,95 @@ $(document).on("click", ".view-tags", function(e) {
 		$(viewTag).removeClass('show').addClass('hidden');
 	} else {
 		$(viewTag).removeClass('hidden').addClass('show');
-		var bookmark = $(this).closest('.bookmark');
-		var bookmarkID = bookmark.find('input[name="bookmarkID"]').attr('value');
-		console.log('View other tags - bookmark : ' + bookmarkID);
-		var postedUserID = bookmark.find('input[name="postedUserID"]').attr('value');
-		if($('.dashboard').hasClass('show')) {
-			var ajaxUrl = '/TagRecommend/dashboard/getOtherTags';
-			var ajaxData = { 'bookmarkID' : bookmarkID};
-		} else {
-			var ajaxUrl = '/TagRecommend/network/getOtherTags';
-			var ajaxData = { 'bookmarkID' : bookmarkID, 'postedUserID' : postedUserID};
-		}
-		$.ajax({
-			type : 'GET',
-			url : ajaxUrl,
-			data : ajaxData,
-			success : function (data) {
-				console.log(data);
-				if(data.status == "SUCCESS") {
-					for(i=0; i<data.result.length; i++) {
-						$(viewTag).html('');
-						var additionalTag = data.result[i];
-						var inner = '<div class="row"><div class="col-lg-2">';
-						inner += additionalTag.firstName + ' ' + additionalTag.lastName + ': </div>';
-						inner += '<div class="col-lg-10"><div class="inline-div">';
-						for (j = 0; j < additionalTag.tags.length; j++) {
-							var tag = additionalTag.tags[j];
-							var id = 'menu' + '-' + additionalTag.userID + '-' + bookmarkID + '-' + j;
-							inner += '<div class="dropdown inline-div">';
-							inner += '<code class="bookmark-tag dropdown-toogle" data-toggle="dropdown" id="'
-									+ id + '">#' + tag + '</code>';
-							inner += '<ul class="dropdown-menu" role="menu" aria-labelledby="' + id + '">';
-							inner += '<li role="presentation"><a role="menuitem" tabindex="-1" href="#">Filter by #' + tag + '</a></li>';
-							inner += '<li role="presentation"><a role="menuitem" tabindex="-1" href="#"> Find #' + tag + ' on System</a></li>';
-							inner += '</ul></div>';
-						}
-						inner += '</div></div></div>';
-						$(viewTag).append(inner);
-					}
-				} else {
-					$(viewTag).html('<div class="text-center"><small class="text-warning">No additional tags</small></div>');
-				}
-			}
-		});
+		loadOtherTags(this);
 	}
 });
+
+function loadOtherTags(element) {
+	var viewTag = $(element).closest('.bookmark').find('.tags-jumbotron');
+	var bookmark = $(element).closest('.bookmark');
+	var bookmarkID = bookmark.find('input[name="bookmarkID"]').attr('value');
+	console.log('View other tags - bookmark : ' + bookmarkID);
+	var postedUserID = bookmark.find('input[name="postedUserID"]').attr('value');
+	if($('.dashboard').hasClass('show')) {
+		var ajaxUrl = '/TagRecommend/dashboard/getOtherTags';
+		var ajaxData = { 'bookmarkID' : bookmarkID};
+	} else {
+		var ajaxUrl = '/TagRecommend/network/getOtherTags';
+		var ajaxData = { 'bookmarkID' : bookmarkID, 'postedUserID' : postedUserID};
+	}
+	$.ajax({
+		type : 'GET',
+		url : ajaxUrl,
+		data : ajaxData,
+		success : function (data) {
+			console.log(data);
+			if(data.status == "SUCCESS") {
+				$(viewTag).html('');
+				for(i=0; i<data.result.length; i++) {
+					var userID = $('.navbar-header').find('.userID').attr('value');
+					var additionalTag = data.result[i];
+					var inner = '<div class="row">';
+					inner += '<div class="col-lg-2">';
+					if(additionalTag.userID == userID) {
+						inner += 'You: </div>';
+					} else {
+						inner += additionalTag.firstName + ' ' + additionalTag.lastName + ': </div>';
+					}
+					inner += '<div class="col-lg-10"><div class="inline-div">';
+					for (j = 0; j < additionalTag.tags.length; j++) {
+						var tag = additionalTag.tags[j];
+						var id = 'menu' + '-' + additionalTag.userID + '-' + bookmarkID + '-' + j;
+						inner += '<div class="dropdown inline-div">';
+						if(additionalTag.userID == userID) {
+							inner += '<i class="fa fa-times othertag-delete" style="cursor: pointer;"></i><code class="bookmark-tag dropdown-toogle" data-toggle="dropdown" id="'
+								+ id + '">#' + tag + '</code> ';
+						} else {
+							inner += '<code class="bookmark-tag dropdown-toogle" data-toggle="dropdown" id="'
+								+ id + '">#' + tag + '</code>';
+						}
+						
+						inner += '<ul class="dropdown-menu" role="menu" aria-labelledby="' + id + '">';
+						inner += '<li role="presentation"><a role="menuitem" tabindex="-1" href="#">Filter by #' + tag + '</a></li>';
+						inner += '<li role="presentation"><a role="menuitem" tabindex="-1" href="#"> Find #' + tag + ' on System</a></li>';
+						inner += '</ul></div>';
+					}
+					inner += '</div></div></div>';
+					$(viewTag).append(inner);
+				}
+			} else {
+				$(viewTag).html('<div class="text-center"><small class="text-warning">No additional tags</small></div>');
+			}
+		}
+	});
+}
+/* =============================================== */
+/*               Xóa other tag on click            */
+/* =============================================== */
+$(document).on('click', '.othertag-delete', function(e) {
+	var bookmarkID = $(this).closest('.bookmark').find('input[name="bookmarkID"]').attr('value');
+	var otherTag = $(this).closest('.dropdown').find('code').text().slice(1);
+	$.ajax({
+		type : 'POST',
+		url : '/TagRecommend/network/deleteOtherTag',
+		data : {
+			'bookmarkID' : bookmarkID,
+			'otherTag' : otherTag
+		}, success : function(data) {
+			if(data.status == "SUCCESS") {
+				bootbox.alert('<h4 class="text-center text-info"><i class="fa fa-check-square-o"></i> Deleted Tags: <code>#' + otherTag + '</code> successfully!</h4>');
+			} else {
+				bootbox.alert('<h4 class="text-center text-warning"><i class="fa fa-exclamation-triangle"></i>' + data.result + '</h4>');
+			}
+		}, error: function(xhr, textStatus, error) {
+			console.log(xhr.statusText);
+			console.log(textStatus);
+			console.log(error);
+			bootbox.alert('<h4 class="text-center text-danger"><i class="fa fa-exclamation-triangle"></i> Something has happend while communicate!</h4>')
+		}
+	});
+});
+
 $(document).on("click", ".view-rating", function(e) {
 	var viewRating = $(this).closest('.bookmark').find('.rating-jumbotron');
 	if($(viewRating).hasClass('show')) {
@@ -596,20 +721,20 @@ $(document).on('click', '.tag-delete', function(e) {
 	console.log($(this).parent().text().trim().split('#')[1]);
 	var deletedTag = $(this).parent().text().trim().split('#')[1];
 	deletedTags.push(deletedTag);
-	if($('.dashboard').hasClass('show')) {
-		displayTags(taggedTags, deletedTag, $('#tagged-tags'));
-	} else if ($('.discover').hasClass('show')) {
+	if ($('.discover').hasClass('show')) {
 		displayTags(subscriptionTags, deletedTags, $('#subscription-tags-modal'))
+	} else {
+		displayTags(taggedTags, deletedTags, $('#tagged-tags'));
 	}
 });
 $(document).on('click', '.tag-restore', function(e) {
 	console.log($(this).parent().text().trim().split('#')[1]);
 	var restoreTag = $(this).parent().text().trim().split('#')[1];
 	deletedTags.splice(deletedTags.indexOf(restoreTag), 1);
-	if($('.dashboard').hasClass('show')) {
-		displayTags(taggedTags, deletedTag, $('#tagged-tags'));
-	} else if ($('.discover').hasClass('show')) {
+	if ($('.discover').hasClass('show')) {
 		displayTags(subscriptionTags, deletedTags, $('#subscription-tags-modal'))
+	} else {
+		displayTags(taggedTags, deletedTags, $('#tagged-tags'));
 	}
 });
 
@@ -637,6 +762,7 @@ $(document).ready(function() {
 			$(this).after('<div style="margin-top: 20px;" class="alert alert-danger" role="alert"><i class="fa fa-times"></i> Tag can not be blank</div>');
 		} else {
 			var tags = $('#nw-tag').val().split(/,\s*/);
+			tags.splice(tags.length - 1, 1);
 			var bookmark = $(invoker).closest('.bookmark');
 			var bookmarkID = bookmark.find('input[name="bookmarkID"]').attr('value');
 			$.ajax({
@@ -648,8 +774,18 @@ $(document).ready(function() {
 				},
 				traditional : true,
 				success : function(data) {
-					$('#nw-tag').val('');
-					$('$nw-add-tag-modal').modal('hide');
+					if(data.status == "SUCCESS") {
+						var message = '';
+						for(i=0; i<tags.length; i++) {
+							message += '<code>' + tags[i] + '</code>  '; 
+						}
+						bootbox.alert('<h4 class="text-center text-info"><i class="fa fa-check-square-o"></i> Added Tags: ' + message + ' successfully!</h4>');
+						$('#nw-tag').val('');
+						$('$nw-add-tag-modal').modal('hide');
+					} else {
+						bootbox.alert('<h4 class="text-center text-warning"><i class="fa fa-exclamation-triangle"></i>' + data.result + '</h4>');
+					}
+					
 				}
 			});
 		}
@@ -659,23 +795,24 @@ $(document).ready(function() {
 /*           Click link tăng số lần view           */
 /* =============================================== */
 $(document).on('mousedown', '.bookmark-link', function(e) {
-	if($('.dashboard').hasClass('hidden')) {
-		var bookmark = $(this).closest('.bookmark');
-		var bookmarkID = bookmark.find('input[name="bookmarkID"]').attr('value');
-		var badge = $(bookmark).find('.badge');
-		var viewTime = parseInt($(badge).text());
-		$(badge).text(viewTime + 1);
-		$.ajax({
-			type : 'POST',
-			url : '/TagRecommend/network/linkClick',
-			data : {
-				'bookmarkID' : bookmarkID
-			},
-			success : function(data) {
-				
-			}
-		});	
-	}
+	var bookmark = $(this).closest('.bookmark');
+	var bookmarkID = bookmark.find('input[name="bookmarkID"]').attr('value');
+	var badge = $(bookmark).find('.badge');
+	$.ajax({
+		type : 'POST',
+		url : '/TagRecommend/network/linkClick',
+		data : {
+			'bookmarkID' : bookmarkID
+		},
+		success : function(data) {
+			$(badge).text(data.result);
+			$(badge).textillate({
+				'in' : {
+		            effect: 'rollIn'
+		        }
+			});
+		}
+	});	
 });
 /* =============================================== */
 /*                  Xử lí Sort By                  */
@@ -685,14 +822,26 @@ $(document).on('click', '#ar', function(e) {
 	sortBy = 1;
 	$(this).html('<i class="fa fa-check-circle"></i> Average Rating');
 	$('#vt').text('View Times');
+	$('#st').text('Same Tags');
+	$('#ct').text('Copy Times');
+	$('#pt').text('Posted Time');
+	ajaxSortBy(sortBy);
+});
+$(document).on('click', '#st', function(e) {
+	offset = 0;
+	sortBy = 2;
+	$(this).html('<i class="fa fa-check-circle"></i> Same Tags');
+	$('#ar').text('Average Rating');
+	$('#vt').text('View Times');
 	$('#ct').text('Copy Times');
 	$('#pt').text('Posted Time');
 	ajaxSortBy(sortBy);
 });
 $(document).on('click', '#vt', function(e) {
 	offset = 0;
-	sortBy = 2;
+	sortBy = 3;
 	$(this).html('<i class="fa fa-check-circle"></i> View Times');
+	$('#st').text('Same Tags');
 	$('#ar').text('Average Rating');
 	$('#ct').text('Copy Times');
 	$('#pt').text('Posted Time');
@@ -700,42 +849,44 @@ $(document).on('click', '#vt', function(e) {
 });
 $(document).on('click', '#ct', function(e) {
 	offset = 0;
-	sortBy = 3;
-	
+	sortBy = 4;
 	$(this).html('<i class="fa fa-check-circle"></i> Copy Times');
 	$('#vt').text('View Times');
+	$('#st').text('Same Tags');
 	$('#ar').text('Average Rating');
 	$('#pt').text('Posted Time');
 	ajaxSortBy(sortBy);
 });
 $(document).on('click', '#pt', function(e) {
 	offset = 0;
-	sortBy = 4;
+	sortBy = 5;
 	$(this).html('<i class="fa fa-check-circle"></i> Posted Time');
 	$('#vt').text('View Times');
+	$('#st').text('Same Tags');
 	$('#ct').text('Copy Times');
 	$('#ar').text('Average Rating');
-	
 	ajaxSortBy(sortBy);
 });
 function ajaxSortBy(sortBy) {
-	scene.remove();
+	if (typeof scene !== 'undefined') {
+	    scene.remove();
+	}
 	if($('.search').hasClass('show')) {
-		var ajaxUrl = "/TagRecommend/search";
-		var ajaxData = {'sortBy' : sortBy, 'offset' : offset, 'tag' : searchTag};
-		var content = $('.page-content').find('.search');
+		var ajaxUrl = "/TagRecommend/network/search";
+		var searchInput = $('#search-input').val() ;
+		var ajaxData = {'searchInput' : searchInput, 'sortBy' : sortBy};
+		var content = $('.search').eq(1);
 	} else {
 		if(document.URL.indexOf('network') > -1) {
 			var ajaxUrl = "/TagRecommend/network/getBookmarks";
 			var ajaxData = {'sortBy' : sortBy, 'offset' : offset};
-			var content = $('.page-content').find('.network');
+			var content = $('.network').eq(1);
 		} else if ($('.discover').hasClass('show')) {
 			var ajaxUrl = "/TagRecommend/discover/discoverBookmarks";
 			var ajaxData = {'subscriptionTags' : totalDiscoverTags, 'sortBy' : sortBy, 'offset' : offset};
 			var content = $('.discover').eq(1);
 		}
 	}
-	var save = $(content).find('.sort-by');
 	$(content).html('');
 	$(content).append('<div class="waiting" style="text-align: center;"><i class="fa fa-spinner fa-pulse fa-5x"></i></div>');
 	$.ajax({
@@ -745,13 +896,15 @@ function ajaxSortBy(sortBy) {
 		data : ajaxData,
 		success : function(data) {
 			console.log(data);
-			$(content).html('');
-			$(content).append(save);
+			loadSortByBar(content, sortBy);
 			if(data.status == "SUCCESS") {
 				loadBookmarks(content, data);
-				$(content).append('<div id="loader" style="text-align: center;"><i class="fa fa-spinner fa-spin"></i> LOADING...</div>');
-				offset += 5;
-				infiniteScroll(content);	
+				if(!content.hasClass('search')) {
+					$(content).append('<div id="loader" style="text-align: center;"><i class="fa fa-spinner fa-spin"></i> LOADING...</div>');
+					offset += 5;
+					infiniteScroll(content);	
+				}
+			
 			}
 			if(data.status == "EMPTY") {
 				var inner = '<div class="row" style="margin-top: 25px"><div class="col-lg-12"><p class="text-center text-warning">';
@@ -779,9 +932,13 @@ function loadBookmarks(content, data) {
 		var ratingID = 'input-' + bookmark.bookmarkID;
 		console.log('Star Rating' + ratingID);
 		var inner = '<div class="bookmark">';
-		inner += '<div class="row"><div class="col-lg-12"><h3>' + bookmark.title + '</h3></div></div>';
-		inner += '<div class="row"><div class="col-lg-9"><a class="text-info bookmark-link" target="_blank" href="' + bookmark.url + '">' + bookmark.url + '</a></div>';
-		inner += '<div class="col-lg-3 text-center"><p>Last Updated: ' + bookmark.date + '</p></div></div>';
+		if($(content).hasClass('search')) {
+			inner += '<div class="row"><div class="col-lg-12"><h3>[<span class="text-info">Point: ' + bookmark.point.toFixed() + '</b></span>] ' + bookmark.title + '</h3></div></div>';
+		} else {
+			inner += '<div class="row"><div class="col-lg-12"><h3><span class="stt">' + (i+offset+1) + '</span> ' + bookmark.title + '</h3></div></div>';	
+		}
+		inner += '<div class="row"><div class="col-lg-9"><a class="bookmark-link" target="_blank" href="' + bookmark.url + '">' + bookmark.url + '</a></div>';
+		inner += '<div class="col-lg-3 text-center"><p><b>Last Updated: ' + bookmark.date + '</b></p></div></div>';
 		inner += '<div class="row"><div class="col-lg-9"><div class="inline-div">';
 		inner += '<i class="fa fa-tags"></i> Tags: ';
 		for (j = 0; j < bookmark.tags.length; j++) {
@@ -791,9 +948,9 @@ function loadBookmarks(content, data) {
 			inner += '<code class="bookmark-tag dropdown-toogle" data-toggle="dropdown" id="'
 					+ id + '">#';
 			if($(content).hasClass('search') && tag == searchTag) {
-				inner += '<b>' + tag + '</b>';
+				inner += '<b style="font-size: 14px">' + tag + '</b>';
 			} else if($(content).hasClass('discover') && totalDiscoverTags.indexOf(tag) > -1) {
-				inner += '<b>' + tag + '</b>';
+				inner += '<b style="font-size: 14px">' + tag + '</b>';
 			} else {
 				inner += tag;
 			}
@@ -812,7 +969,7 @@ function loadBookmarks(content, data) {
 			if(bookmark.friend === true) {
 				inner += '<button class="btn btn-sm btn-success" data-toggle="modal" data-target="#nw-add-tag-modal"><i class="fa fa-pencil-square-o"></i> Add Tag</button>';
 			} else {
-				inner += '<button class="btn btn-sm btn-warning"><i class="fa fa-user-plus"></i> Follow</button>';
+				inner += '<button class="btn btn-sm btn-warning follow"><i class="fa fa-user-plus"></i> Follow</button>';
 			}
 			if(bookmark.copied === true) {
 				inner += '<button class="btn btn-sm btn-info uncopy-bookmark"><i class="fa fa-files-o"></i> Copied (' + bookmark.copyTimes + ')</button>';
@@ -822,18 +979,19 @@ function loadBookmarks(content, data) {
 		}
 		inner += '<input type="hidden" name="bookmarkID" value="'+ bookmark.bookmarkID + '">';
 		if($(content).hasClass('network') || $(content).hasClass('discover') || $(content).hasClass('search')) {
-			inner += '<input type="hidden" name="postedUserID" value="' + bookmark.postedUserID + '" />';	
+			inner += '<input type="hidden" class="userID" name="postedUserID" value="' + bookmark.postedUserID + '" />';	
 		}
 		inner += '</div></div></div>'; // end div, end col-lg-3,
 		// View other Tag
 		inner += '<div class="row"><div class="col-lg-12"><a class="view-tags" style="cursor: pointer;"><i class="fa fa-tags"></i> Tags from other users: </a></div></div>';
 		inner += '<div class="row"><div class="col-lg-11" style="margin-top: 5px"><div class="jumbotron hidden tags-jumbotron"><div style="text-align: center;"><i class="fa fa-spinner fa-pulse fa-2x"></i></div></div></div></div>';
 		// Rating
-		inner += '<div class="row"><div class="col-lg-1" style = "margin-top: 10px">Rating : </div><div class="col-lg-4 rating-div"><input id="' + ratingID + '" class="rating" data-size="xs"></div>';
+		inner += '<div class="row"><div class="col-lg-2" style = "margin-top: 10px">Your Rating : </div><div class="col-lg-4 rating-div"><input id="' + ratingID + '" class="rating" data-size="xs"></div>';
 		// View count
-		inner += '<div class="col-lg-4" style = "margin-top: 10px"><p style="font-size: 150%" class="avg-rating">Avg Rating: ' + bookmark.totalRating.toFixed(2) +'</p></div><div class="col-lg-3 text-center" style="margin-top: 10px">View Count <span class="badge">' + bookmark.viewTimes + '</span></div></div>';
+		inner += '<div class="col-lg-3" style = "margin-top: 7px"><p style="font-size: 150%" class="avg-rating">Average Rating: ' + bookmark.totalRating.toFixed(2) +'</p></div><div class="col-lg-3 text-center" style="margin-top: 10px">View Count <span class="badge">' + bookmark.viewTimes + '</span></div></div>';
 		// View Rating Result
-		inner += '<div class="row"><div class="col-lg-9"><a class="view-rating" style="cursor: pointer;"><i class="fa fa-list"></i> View Rating result: </a></div></div>';
+		inner += '<div class="row"><div class="col-lg-9"><a class="view-rating" style="cursor: pointer;"><i class="fa fa-list"></i> View Rating Result: </a></div>';
+		inner += '</div>';
 		inner += '<div class="row"><div class="col-lg-11" style="margin-top: 5px"><div class="jumbotron hidden rating-jumbotron"><div style="text-align: center;"><i class="fa fa-spinner fa-pulse fa-2x"></i></div></div></div></div>'
 		inner += '<div class="row"><div class="col-lg-12" style="margin-top: 10px"><div > </div></div></div>';
 		if(!$(content).hasClass('dashboard')) {
@@ -864,9 +1022,18 @@ $(document).ready(function() {
       return split( term ).pop();
     }
     $('#edit').autocomplete({
-		source : function(request, response) {
-			response($.ui.autocomplete.filter(availableTags, extractLast(request.term)));
-		},
+    	source: function(request, response) {
+	        $.ajax ({
+	        	type: 'GET',
+	        	url: "/TagRecommend/dashboard/availableTags",
+	        	data: {
+	        		'term': extractLast(request.term)
+	        	},
+	        	success: function( data ) {
+	        		response($.ui.autocomplete.filter(data.result, extractLast(request.term)));
+	        	}
+        	});
+    	},
 		focus : function() {
 			return false;
 		},
@@ -880,9 +1047,18 @@ $(document).ready(function() {
 		}
 	});
 	$('#nw-tag').autocomplete({
-		source : function(request, response) {
-			response($.ui.autocomplete.filter(availableTags, extractLast(request.term)));
-		},
+		source: function(request, response) {
+	        $.ajax ({
+	        	type: 'GET',
+	        	url: "/TagRecommend/dashboard/availableTags",
+	        	data: {
+	        		'term': extractLast(request.term)
+	        	},
+	        	success: function( data ) {
+	        		response($.ui.autocomplete.filter(data.result, extractLast(request.term)));
+	        	}
+        	});
+    	},
 		focus : function() {
 			return false;
 		},
@@ -992,7 +1168,7 @@ $(document).on('click', '.tag-menu2', function(e) {
 			}
 			if(data.status == "SUCCESS") {
 				loadBookmarks(searchContent, data);
-				$(searchContent).append('<div id="loader" style="text-align: center;"><i class="fa fa-spinner fa-spin"></i> LOADING...</div>');
+				$(searchContent).append('<div id="loader" style="text-align: center;"><i class="fa fa-spinner fa-spin"></i> Loading...</div>');
 				offset += 5;
 				infiniteScroll(searchContent);
 			}
@@ -1100,7 +1276,7 @@ $(document).ready(function() {
 /* =============================================== */
 $(document).on('click', '.copy-bookmark', function(e) {
 	$(this).removeClass('copy-bookmark').addClass('uncopy-bookmark');
-	$(this).removeClass('btn-success').addClass('btn-info');
+	$(this).html('<i class="fa fa-spinner fa-spin"></i> Processing...');
 	var element = this;
 	var bookmark = $(this).closest('.bookmark');
 	var bookmarkID = bookmark.find('input[name="bookmarkID"]').attr('value');
@@ -1112,6 +1288,7 @@ $(document).on('click', '.copy-bookmark', function(e) {
 			'bookmarkID' : bookmarkID
 		}, success : function(data) {
 			if(data.status == "SUCCESS") {
+				$(element).removeClass('btn-success').addClass('btn-info');
 				$(element).text('Copied (' + data.result + ')');	
 			}
 		}
@@ -1119,7 +1296,7 @@ $(document).on('click', '.copy-bookmark', function(e) {
 });
 $(document).on('click', '.uncopy-bookmark', function(e) {
 	$(this).removeClass('uncopy-bookmark').addClass('copy-bookmark');
-	$(this).removeClass('btn-info').addClass('btn-success');
+	$(this).html('<i class="fa fa-spinner fa-spin"></i> Processing...');
 	var element = this;
 	var bookmark = $(this).closest('.bookmark');
 	var bookmarkID = bookmark.find('input[name="bookmarkID"]').attr('value');
@@ -1131,6 +1308,7 @@ $(document).on('click', '.uncopy-bookmark', function(e) {
 			'bookmarkID' : bookmarkID
 		}, success : function(data) {
 			if(data.status == 'SUCCESS') {
+				$(element).removeClass('btn-info').addClass('btn-success');
 				$(element).text('Copy (' + data.result + ')');	
 			}
 		}
@@ -1245,7 +1423,7 @@ function discoverBookmarks(tags) {
 			}
 			if(data.status == "SUCCESS") {
 				loadBookmarks(content, data);
-				$(content).append('<div id="loader" style="text-align: center;"><i class="fa fa-spinner fa-spin"></i> LOADING...</div>');
+				$(content).append('<div id="loader" style="text-align: center;"><i class="fa fa-spinner fa-spin"></i> Loading...</div>');
 				offset += 5;
 				infiniteScroll(content);	
 			} 
@@ -1265,4 +1443,261 @@ function discoverBookmarks(tags) {
 			}	
 		}
 	});
+}
+/* =============================================== */
+/*        Xử lí Search khi gõ trực tiếp vào        */
+/* =============================================== */
+function processSearch() {
+	$('.search').eq(1).html('<div style="text-align: center;"><i class="fa fa-spinner fa-pulse fa-5x"></i></div>');
+	if(!$('#search-input').val()) {
+		bootbox.alert({
+			size: 'small',
+			message : '<h4 class="text-center text-warning"><i class="fa fa-exclamation-triangle"></i> Search cannot be blank</h4>',
+			callback : function () {
+				$('#search-input').focus();	
+			}
+		});
+	} else {
+		var searchInput = $('#search-input').val() ;
+		$.ajax({
+			type : 'GET',
+			url : '/TagRecommend/network/search',
+			data : {
+				'searchInput' : searchInput, 'sortBy' : sortBy
+			}, success : function(data) {
+				if(data.status == "SUCCESS") {
+					if($('.discover').hasClass('show')) {
+						$('.discover').removeClass('show').addClass('hidden');
+						$('.discover').html('');
+					}
+					if($('.network').hasClass('show')) {
+						$('.network').removeClass('show').addClass('hidden');
+						$('.network').html('');
+					}
+					if($('.dashboard').hasClass('show')) {
+						if (typeof scene !== 'undefined') {
+						    scene.remove();
+						}
+						$('.dashboard').removeClass('show').addClass('hidden');
+						$('dashboard').html('');
+					}
+					if($('.search').hasClass('hidden')) {
+						$('.search').removeClass('hidden').addClass('show');
+					} else {
+						$('.search').html('');	
+					}
+					if(searchInput.charAt(0) == '@') {
+						processUserSearchResult(data, searchInput);
+					}
+					if(searchInput.charAt(0) == '#') {
+						processTagSearchResult(data, searchInput);
+					}
+				} else {
+					bootbox.alert('<h4 class="text-center text-warning"><i class="fa fa-exclamation-triangle"></i>' + data.result + '</h4>');
+				}
+			}
+		});
+	}
+}
+/* =============================================== */
+/*              Xủ lí search người dùng            */
+/* =============================================== */
+function processTagSearchResult(data, searchInput) {
+	searchTag = searchInput.slice(1);
+	$('.search').eq(0).html('<div class="row"><div class="col-lg-12"><h3 class="text-center text-info">Search Tag: ' + searchInput + '</h3></div></div>');
+	if(data.result.length == 0) {
+		$('.search').eq(1).html('<div class="row" style="margin-top: 25px"><div class="col-lg-12"><h4 class="text-center text-warning">No Bookmark was found with Tag: ' + searchInput + '</h4></div></div>')
+	} else {
+		loadSortByBar($('.search').eq(1), sortBy);
+		loadBookmarks($('.search').eq(1), data);
+	}
+}
+/* =============================================== */
+/*              Xủ lí search người dùng            */
+/* =============================================== */
+function processUserSearchResult(data, searchInput) {
+	var canvasID = null;
+	var mostUsedTags = [];
+	var tagListID = null;
+	$('.search').eq(0).html('<div class="row"><div class="col-lg-12"><h3 class="text-center text-info">Search User: ' + searchInput + '</h3></div></div>');
+	if(data.result.length == 0) {
+		$('.search').eq(1).html('<div class="row" style="margin-top: 25px"><div class="col-lg-12"><h4 class="text-center text-warning">No user was found for' + searchInput + '</h4></div></div>')
+	} else {
+		var content = $('.search').eq(1);
+		content.html('');
+		for(i=0; i<data.result.length; i++) {
+			var user = data.result[i];
+			mostUsedTags = user.mostUsedTags;
+			var inner = '<div class="row user">';
+			inner += '<div class="col-lg-2 text-center">'
+			inner += '<img src="images/user.png" class="img-thumbnail" alt="User Default Avatar" style="min-height: 100px; height: 100px;">';
+			inner += '<input type="hidden" name="userID" class="userID" value=' + user.userID + '" />';
+			if(user.followed === false) {
+				inner += '<button class="btn btn-sm btn-warning follow" style="margin-top: 10px"><i class="fa fa-user-plus"></i> Follow</button>';
+			} else {
+				inner += '<button class="btn btn-sm btn-success follow" style="margin-top: 10px"><i class="fa fa-user-times"></i> Unfollow</button>';
+			}
+			inner += '</div>'; // end avatar image
+			inner += '<div class="col-lg-5">';
+			inner += '<h2>' + user.firstName + ' ' + user.lastName + '</h2>';
+			inner += '<h4 class="text-info">' + user.bookmarkCount + ' - Bookmark  ' + user.followingCount + ' -  Following ' + user.followerCount + ' - Follower</h4>';
+			if(user.online === true) {
+				inner += '<h4 class="text-info">Status :    <i class="fa fa-circle text-success"></i></h4>';
+			} else {
+				inner += '<h4 class="text-info">Status :    <i class="fa fa-circle text-danger"></i></h4>';
+			}
+			
+			inner += '</div>';
+			inner += '<div class="col-lg-5 text-center">';
+			canvasID = 'canvas-' + user.userID;
+			tagListID = 'tagList-' + user.userID;
+			inner += '<h4>Top Most Used Tags</h4>';
+			inner += '<div id="' + canvasID + 'Container"><canvas width="250" height="100" id="' + canvasID + '" class="custom-canvas"></canvas>';	 
+			inner += '<ul id="' + tagListID +'">';
+			for(j=0; j<mostUsedTags.length; j++) {
+				var tag = mostUsedTags[j];
+				if(tag.weight < 5) {
+					inner += '<li><a href="#" style="font-size: 10px">' + tag.tag +'</a></li>';
+				}
+				if(tag.weight >= 5 && tag.weight < 10) {
+					inner += '<li><a href="#" style="font-size: 17px">' + tag.tag +'</a></li>';
+				}
+				if(tag.weight >= 10) {
+					inner += '<li><a href="#" style="font-size: 24px">' + tag.tag +'</a></li>';
+				}
+			}
+			inner += '</ul>';
+			inner += '</div>' //end canvas
+			inner += '</div>'; //end col-5
+			inner += '</div>' //end user 
+			content.append(inner);
+			createTagsCanvas($('#' + canvasID + 'Container'), $('#' + canvasID), tagListID);
+		}
+	}
+}
+/* =============================================== */
+/*   Khởi tạo canvas cho mỗi user khi search user  */
+/* =============================================== */
+function createTagsCanvas(container, element, tagList) {
+	if(!$(element).tagcanvas({
+		textColour : '#0066CC',
+		outlineColour : '#ff9999',
+		maxSpeed : 0.03,
+		textHeight: 20,
+		dragControl: true,
+		noTagsMessage : false,
+		depth : 0.99,
+		weight : true,
+		noSelect : true,
+	}, tagList)) {
+		$(container).hide();
+	}
+}
+/* =============================================== */
+/*                Update Online Users              */
+/* =============================================== */
+function updateOnlineUsers() {
+	$.ajax({
+		type : 'GET',
+		url: '/TagRecommend/network/updateOnlineUsers',
+		success: function(data) {
+			$('#network-menu').html('<i class="fa fa-users fa-fw"></i> Network (Online Users: ' + data.result +'  <i class="fa fa-user"></i>)');
+	    }
+	});
+	setTimeout(updateOnlineUsers, 60000);
+}
+/* =============================================== */
+/*         Follow / Unfollow người dùng khác       */
+/* =============================================== */
+function follow(button) {
+	var targetUserID = -1;
+	if($(button).closest('.user').length) {
+		targetUserID = parseInt($(button).closest('.user').find('.userID').attr('value'));
+	}
+	if($(button).closest('.bookmark').length) {
+		targetUserID = parseInt($(button).closest('.bookmark').find('.userID').attr('value'))
+	}
+	$.ajax({
+		type : 'POST',
+		url : '/TagRecommend/network/follow',
+		data : {
+			'targetUserID' : targetUserID
+		}, success : function(data) {
+			if($('.network').hasClass('show') || $('.discover').hasClass('show')) {
+				window.location.reload(true);	
+			}
+			if($('.search').hasClass('show')) {
+				if(data.result === true) {
+					$(button).removeClass('btn-warning').addClass('btn-success');
+					$(button).html('<i class="fa fa-user-times"></i> Unfollow');
+				} else {
+					$(button).removeClass('btn-success').addClass('btn-warning');
+					$(button).html('<i class="fa fa-user-plus"></i> Follow');
+				}
+			}
+		}, error: function(xhr, textStatus, error) {
+		      console.log(xhr.statusText);
+		      console.log(textStatus);
+		      console.log(error);
+		      bootbox.alert('<h4 class="text-center text-danger"><i class="fa fa-exclamation-triangle"></i> Something has happend while communicate!</h4>')
+		}
+	});
+
+}
+/* =============================================== */
+/*                   Xử lí Feedback                */
+/* =============================================== */
+function processFeedback() {
+	if(!$('#feedback-area').val()) {
+		bootbox.alert({
+			size: 'small',
+			message : '<h4 class="text-center text-warning"><i class="fa fa-exclamation-triangle"></i> Feedback cannot be blank</h4>'
+		});
+	} else {
+		var feedback = $('#feedback-area').val() ;
+		$.ajax({
+			type : 'POST',
+			url : '/TagRecommend/dashboard/feedback',
+			data : {
+				'feedback' : feedback,
+			}, success : function(data) {
+				if(data.status == "SUCCESS") {
+					bootbox.alert({
+						message: '<h4 class="text-center text-info"><i class="fa fa-check-square-o"></i>' + data.result + '</h4>',
+						callback : function() {
+							$('#feedback-area').val('') ;
+						}
+					});
+					
+				} else {
+					bootbox.alert('<h4 class="text-center text-warning"><i class="fa fa-exclamation-triangle"></i>' + data.result + '</h4>');
+				}
+			}, error: function(xhr, textStatus, error) {
+			      console.log(xhr.statusText);
+			      console.log(textStatus);
+			      console.log(error);
+			      bootbox.alert('<h4 class="text-center text-danger"><i class="fa fa-exclamation-triangle"></i> Something has happend while communicate!</h4>')
+			}
+		});
+	}
+}
+/* =============================================== */
+/*                  Load Sortby Bar                */
+/* =============================================== */
+function loadSortByBar(element, sortBy) {
+	$(element).html('<div class="row sortby"><div class="col-lg-2"><h4 class="text-center">Top Priority: </h4></div><div class="col-lg-10">' +
+		'<div><ul class="nav  nav-justified">' +
+		'<li class="sort-method"><a href="#" id="ar">Average Rating</a></li>' +
+		'<li class="sort-method"><a href="#" id="st">Same Tags</a></li>' +
+		'<li class="sort-method"><a href="#" id="vt">View Times</a></li>' +
+		'<li class="sort-method"><a href="#" id="ct">Copy Times</a></li>' +
+		'<li class="sort-method active"><a href="#" id="pt">Posted Time</a></li>' +
+		'</ul></div></div></div>');
+	switch(sortBy) {
+	case 1: $('#ar').html('<i class="fa fa-check-circle"></i> Average Rating'); break;
+	case 2: $('#st').html('<i class="fa fa-check-circle"></i> Same Tags'); break;
+	case 3: $('#vt').html('<i class="fa fa-check-circle"></i> View Times'); break;
+	case 4: $('#ct').html('<i class="fa fa-check-circle"></i> Copy Times'); break;
+	case 5: $('#pt').html('<i class="fa fa-check-circle"></i> Posted Time'); break;
+	}
 }

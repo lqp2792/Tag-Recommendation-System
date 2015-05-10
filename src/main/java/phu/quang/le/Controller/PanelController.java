@@ -1,15 +1,14 @@
 package phu.quang.le.Controller;
 
-import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.net.URISyntaxException;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.StringTokenizer;
-import java.util.TreeSet;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 
 import javax.servlet.http.HttpSession;
 
@@ -28,20 +27,20 @@ import org.springframework.web.servlet.ModelAndView;
 import phu.quang.le.Model.AdditionalTag;
 import phu.quang.le.Model.Bookmark;
 import phu.quang.le.Model.JsonResponse;
+import phu.quang.le.Model.OnlineHistory;
 import phu.quang.le.Model.RecommendTag;
 import phu.quang.le.Model.Topic;
 import phu.quang.le.Model.User;
-import phu.quang.le.TopicModeling.ModelPrepareThread;
+import phu.quang.le.TopicModeling.ModelAvailableTagsPrepareThread;
+import phu.quang.le.TopicModeling.ModelLoadThread;
 import phu.quang.le.TopicModeling.ModelUtility;
 import phu.quang.le.Utility.BookmarkSQL;
+import phu.quang.le.Utility.DBUtility;
 import phu.quang.le.Utility.TagSQL;
-import phu.quang.le.Utility.ThreadWorker;
 import phu.quang.le.Utility.UrlUtility;
 import phu.quang.le.Utility.UserSQL;
 import cc.mallet.topics.ParallelTopicModel;
 import cc.mallet.topics.TopicInferencer;
-import cc.mallet.types.Alphabet;
-import cc.mallet.types.IDSorter;
 import cc.mallet.types.Instance;
 import cc.mallet.types.InstanceList;
 
@@ -55,36 +54,18 @@ public class PanelController {
 	public ModelAndView getDashBoard(HttpSession session)
 			throws FileNotFoundException, ClassNotFoundException, IOException {
 		if (session.getAttribute("firstName") == null) {
-			return new ModelAndView("index");
+			System.out.println("Session does not exist -> index");
+			return new ModelAndView("redirect:/");
 		} else {
-			try {
-				(new ModelPrepareThread()).start();
-				if (session.getAttribute("availableTags") == null) {
-					InstanceList instances = InstanceList.load(new File(
-							ModelUtility.class.getClassLoader()
-									.getResource("Instance.lda").toURI()));
-					Alphabet dataAlphabet = instances.getDataAlphabet();
-					ParallelTopicModel model = ModelUtility.getTopicModel();
-					ArrayList<TreeSet<IDSorter>> topicSortedWords = model
-							.getSortedWords();
-					int steps = 500;
-					int cpuCount = Runtime.getRuntime().availableProcessors();
-					ExecutorService executor = Executors
-							.newFixedThreadPool(cpuCount);
-					for (int i = 0; i < model.getNumTopics(); i += steps) {
-						int from = i;
-						int to = i + steps;
-						Runnable worker = new ThreadWorker(topicSortedWords,
-								dataAlphabet, from, to);
-						executor.execute(worker);
-					}
-					executor.shutdown();
-					while (!executor.isTerminated()) {
-					}
-					session.setAttribute("availableTags", availableTags);
-				}
-			} catch (URISyntaxException e) {
-				System.err.println("Get Alphabet: " + e);
+			System.out.println("Get Dashboard Page");
+			if (availableTags.size() == 0) {
+				(new ModelAvailableTagsPrepareThread()).start();
+			}
+			if (ModelUtility.model == null) {
+				(new ModelLoadThread()).start();
+			}
+			if (session.getAttribute("sortBy") == null) {
+				session.setAttribute("sortBy", 5);
 			}
 			int userID = (int) session.getAttribute("userID");
 			User u = UserSQL.userStatistic(userID);
@@ -92,9 +73,9 @@ public class PanelController {
 			dashboard.addObject("user", u);
 			dashboard.addObject("firstName", session.getAttribute("firstName"));
 			dashboard.addObject("lastName", session.getAttribute("lastName"));
-			//
 			return dashboard;
 		}
+
 	}
 
 	@RequestMapping(value = "/getBookmarks", method = RequestMethod.GET)
@@ -314,6 +295,62 @@ public class PanelController {
 		JsonResponse rs = new JsonResponse();
 		int userID = (int) session.getAttribute("userID");
 		BookmarkSQL.editBookmark(bookmarkID, userID, addedTags, deletedTags);
+		return rs;
+	}
+
+	@RequestMapping(value = "/history", method = RequestMethod.GET)
+	public @ResponseBody JsonResponse getLoginHistory(HttpSession session) {
+		JsonResponse rs = new JsonResponse();
+		int userID = (int) session.getAttribute("userID");
+		OnlineHistory history = UserSQL.getLoginHistory(userID);
+		rs.setStatus("SUCCESS");
+		rs.setResult(history);
+		return rs;
+	}
+
+	@RequestMapping(value = "/availableTags", method = RequestMethod.GET)
+	public @ResponseBody JsonResponse getAvailableTags(HttpSession session,
+			@RequestParam String term) {
+		List<String> filterdAvailableTags = new ArrayList<String>();
+		while(availableTags.size() == 0) {
+			
+		}
+		JsonResponse rs = new JsonResponse();
+		for (int i = 0; i < availableTags.size(); i++) {
+			String tag = availableTags.get(i);
+			if (tag.startsWith(term.toLowerCase())) {
+				System.out.println("asdasd");
+				filterdAvailableTags.add(tag);
+			}
+		}
+		rs.setResult(filterdAvailableTags);
+		return rs;
+	}
+
+	@RequestMapping(value = "/feedback", method = RequestMethod.POST)
+	public @ResponseBody JsonResponse feedback(HttpSession session,
+			@RequestParam String feedback) {
+		JsonResponse rs = new JsonResponse();
+		int userID = (int) session.getAttribute("userID");
+		Connection c = DBUtility.getConnection();
+		String sql = "INSERT INTO feedback VALUES (?, ?, default)";
+		try {
+			PreparedStatement pst = c.prepareStatement(sql);
+			pst.setInt(1, userID);
+			pst.setString(2, feedback);
+			int result = pst.executeUpdate();
+			if(result > 0) {
+				rs.setStatus("SUCCESS");
+				rs.setResult("Thanks you for your message!");
+			} else {
+				rs.setStatus("FAIL");
+				rs.setResult("Something wrong has happened!");
+			}
+		} catch (SQLException e) {
+			e.printStackTrace();
+		} finally {
+			DBUtility.closeConnection(c);
+		}
 		return rs;
 	}
 }

@@ -1,5 +1,9 @@
 @CHARSET "ISO-8859-1";
 
+body {
+	font-family: 'Vollkorn', serif;
+}
+
 .bookmark-info {
 	margin-left: 10px;
 	margin-right: 10px;
@@ -7,16 +11,22 @@
 }
 
 .tooltip-inner {
-	max-width: 300px;
+	max-width: 270px;
 	/* If max-width does not work, try using width instead */
-	width: 300px;
+	width: 270px;
 	font-size: 14px;
 	text-align: left;
 }
 
 .bookmark {
 	padding-bottom: 15px;
-	border-bottom: 1px solid #EEE;
+	border-bottom: 1px solid #004080;
+}
+
+.user {
+	padding-top: 15px;
+	padding-bottom: 15px;
+	border-bottom: 1px solid #004080;
 }
 
 .bookmark-tag {
@@ -111,21 +121,151 @@ p {
 
 }
 margin-top
-:
+
+
+
+
+
+
+
+
+
+
+
  
+
+
+
+
+
+
+
+
+
+
+
+:
+
+
+
+
+
+
+
+
+
+
+
+ 
+
+
+
+
+
+
+
+
+
+
+
 10
 px
-;
 
-    
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+;
 margin-bottom
-:
+
+
+
+
+
+
+
+
+
+
+
  
+
+
+
+
+
+
+
+
+
+
+
+:
+
+
+
+
+
+
+
+
+
+
+
+ 
+
+
+
+
+
+
+
+
+
+
+
 5
 px
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 ;
-
-
 }
 .progress {
 	background: rgba(245, 245, 245, 1);
@@ -190,10 +330,31 @@ span.arrow {
 .tag-restore {
 	cursor: pointer;
 }
+
 .urlive-container {
-    margin-top:15px;
+	margin-top: 15px;
 }
 
 h1, h2, h3, h4, h5, h6 {
 	word-wrap: break-word;
+}
+
+.stt {
+	display: inline-block;
+	-moz-border-radius: 60px;
+	-webkit-border-radius: 60px;
+	border-radius: 60px;
+	-moz-box-shadow: 0px 0px 2px #888;
+	-webkit-box-shadow: 0px 0px 2px #888;
+	box-shadow: 0px 0px 2px #888;
+}
+
+.custom-canvas {
+	border: 1px solid #b5f2ef;
+	border-radius: 7px 7px 7px 7px;
+}
+
+.sortby {
+	background-color:  #f7f7f7;
+	border-radius: 7px 7px 7px 7px;
 }

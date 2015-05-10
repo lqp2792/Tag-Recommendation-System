@@ -1,5 +1,9 @@
 $(document).on('click', '#register-menu', function(e) {
 	$('#login-modal').modal('hide');
+	$('#first-name').val('');
+	$('#last-name').val('');
+	$('#email-register').val('');
+	$('#password').val('');
 });
 $(document).on('click', '#login-menu', function(e) {
 	$('#register-modal').modal('hide');
@@ -27,78 +31,94 @@ $(document).ready(function(e) {
 	}
 	$('.modal').on('show.bs.modal', centerModals);
 	$(window).on('resize', centerModals);
-	// Login ajax
-	$('#login-form').submit(
-	function(e) {
-		var submit = false;
-		var email = $('#login-email').val();
-		var password = $('#login-password').val();
+	$('#login-form').submit(function(e) {
 		e.preventDefault();
-		if (!email || !password) {
-			submit = false;
-			if (!email) {
-				$('#login-email').parent().addClass('has-error');
-				$('#login-email').parent().find('.error-message').html('<p class="text-danger error-message">' 
-						+ '<i class="fa fa-times"></i> Email can not be blank!</p>')
-			}
-			if (!password) {
-				$('#login-password').parent().addClass('has-error');
-				$('#login-password').parent().find('.error-message').html('<p class="text-danger error-message">'
-						+ '<i class="fa fa-times"></i> Password can not be blank!</p>')
-			}
-		} else {
-			submit = true;
-		}
-		if (submit === true) {
-			$.ajax({
-				type : 'POST',
-				url : "/TagRecommend/login",
-				data : {
-					'email' : email,
-					'password' : password
-				},
-				success : function(data) {
-					if (data.status == "SUCCESS") {
-						window.location.href = "/TagRecommend/dashboard";
-					} else {
-						$('.modal-title').parent().find('.error-message').html('<p class="><br/><i class="fa fa-times"></i>' + data.result);
-					}
-				}
-			});
-		}
+		$(this).find('button').html('<i class="fa fa-spinner fa-spin"></i> Processing');
+		submitLoginForm();
 	});
 	$('#register-form').submit(function(e) {
+		e.preventDefault();
+		$(this).find('button').html('<i class="fa fa-spinner fa-spin"></i> Processing');
 		submitRegisterForm();
 	});
 });
+function submitLoginForm() {
+	var isReady = true;
+	var message = null;
+	if(!$('#login-email').val()) {
+		message = '<p class="text-danger error-message">Email can not be blank</p>';
+		showError($('#login-email'), message);
+		setTimeout(resetForm, 2000, $('#login-email')); 
+		isReady = false;
+	}  else if (!validateEmail($('#login-email').val())) {
+		message = '<p class="text-danger error-message">Email is not valid</p>';
+		showError($('#login-email'), message);
+		setTimeout(resetForm, 2000, $('#login-email'));
+		isReady = false;
+	}
+	if(!$('#login-password').val()) {
+		message = '<p class="text-danger error-message">Password can not be blank</p>';
+		showError($('#login-password'), message);
+		setTimeout(resetForm, 2000, $('#login-password'));
+		isReady = false;
+	}
+	if(isReady === true) {
+		var email = $('#login-email').val();
+		var password = $('#login-password').val();
+		$.ajax({
+			type : 'POST',
+			url : "/TagRecommend/login",
+			data : {
+				'email' : email,
+				'password' : password
+			},
+			success : function(data) {
+				$('#login-form').find('button').html('Login');
+				if (data.status == "SUCCESS") {
+					window.location.href = "/TagRecommend/dashboard";
+				} else {
+					bootbox.alert('<h3 class="text-center text-success">' + data.result + '</h3>');
+				}
+			}
+		});
+	} else {
+		$('#login-form').find('button').html('Login');
+	}
+}
 
 function submitRegisterForm() {
 	var isReady = true;
+	var message = null;
 	if(!$('#first-name').val()) {
-		$('#first-name').closest('.form-group').addClass('has-error').addClass('has-feedback');
-		$('#first-name').after('<span class="glyphicon glyphicon-remove form-control-feedback"></span>');
-		$('#first-name').after('<p class="text-danger error-message">First Name can not be blank</p>');
+		message = '<p class="text-danger error-message">First Name can not be blank</p>';
+		showError($('#first-name'), message);
+		setTimeout(resetForm, 2000, $('#first-name')); 
 		isReady = false;
 	} 
 	if(!$('#last-name').val()) {
-		$('#last-name').closest('.form-group').addClass('has-error').addClass('has-feedback');
-		$('#last-name').after('<span class="glyphicon glyphicon-remove form-control-feedback"></span>');
-		$('#last-name').after('<p class="text-danger error-message">Last Name can not be blank</p>');
+		message = '<p class="text-danger error-message">Last Name can not be blank</p>';
+		showError($('#last-name'), message);
+		setTimeout(resetForm, 2000, $('#last-name')); 
 		isReady = false;
 	} 
 	if(!$('#email-register').val()) {
-		$('#email-register').closest('.form-group').addClass('has-error').addClass('has-feedback');
-		$('#email-register').after('<span class="glyphicon glyphicon-remove form-control-feedback"></span>');
-		$('#email-register').after('<p class="text-danger error-message">Email can not be blank</p>');
+		message = '<p class="text-danger error-message">Email can not be blank</p>';
+		showError($('#email-register'), message);
+		setTimeout(resetForm, 2000, $('#email-register'));
 		isReady = false;
-	} 
-	if(!$('#password').val()) {
-		$('#password').closest('.form-group').addClass('has-error').addClass('has-feedback');
-		$('#password').after('<span class="glyphicon glyphicon-remove form-control-feedback"></span>');
-		$('#password').after('<p class="text-danger error-message">Password can not be blank</p>');
+	} else if (!validateEmail($('#email-register').val())) {
+		message = '<p class="text-danger error-message">Email is not valid</p>';
+		showError($('#email-register'), message);
+		setTimeout(resetForm, 2000, $('#email-register'));
 		isReady = false;
 	}
-	
+	if(!$('#password').val()) {
+		message = '<p class="text-danger error-message">Password can not be blank</p>';
+		showError($('#password'), message);
+		setTimeout(resetForm, 2000, $('#password'));
+		isReady = false;
+	}
+
 	if(isReady === true) {
 		$.ajax({
 			type : 'POST',
@@ -109,8 +129,37 @@ function submitRegisterForm() {
 				'email' : $('#email-register').val(),
 				'password' : $('#password').val()
 			}, success : function(data) {
-				
+				$('#register-form').find('button').html('Register');
+				$('#register-modal').modal('hide');
+				if(data.status == "SUCCESS") {
+					bootbox.alert('<h3 class="text-center text-success">' + data.result + '</h3>');
+				} else {
+					bootbox.alert('<h3 class="text-center text-warning">' + data.result + '</h3>');
+				}
 			}
 		});
+	} else {
+		$('#register-form').find('button').html('Register');
 	}
+}
+
+function validateEmail(email) {
+	var filter = /^[\w\-\.\+]+\@[a-zA-Z0-9\.\-]+\.[a-zA-z0-9]{2,4}$/;
+	if (filter.test(email)) {
+		return true;
+	} else {
+		return false;
+	}
+}
+
+function showError(element, message) {
+	$(element).closest('.form-group').addClass('has-error').addClass('has-feedback');
+	$(element).after('<span class="glyphicon glyphicon-remove form-control-feedback"></span>');
+	$(element).after(message);
+}
+
+function resetForm(element) {
+	$(element).closest('.form-group').removeClass('has-error').removeClass('has-feedback');
+	$(element).closest('.form-group').find('span').remove();
+	$(element).closest('.form-group').find('p').remove();
 }

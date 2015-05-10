@@ -139,3 +139,9 @@ center {
 	color: #ffffff;
 	font-size: 30px;
 }
+.fa-facebook, .fa-facebook-square {
+    color: #3b5998
+}
+.fa-twitter, .fa-twitter-square {
+    color: #00aced
+}
