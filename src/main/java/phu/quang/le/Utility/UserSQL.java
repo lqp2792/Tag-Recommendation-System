@@ -464,76 +464,52 @@ public class UserSQL {
 			System.out.println("Check Follow: " + e);
 		} finally {
 			DBUtility.closeConnection(c);
-		} 
+		}
 
 		return isFollowed;
 	}
 
 	public static List<AdvanceBookmark> getAllBookmarksFromFriend(int userID,
 			int offset, int sortBy) {
-		List<AdvanceBookmark> bookmarks = new ArrayList<AdvanceBookmark>();
+		CompareUltility compareUltility = new CompareUltility(sortBy, userID);
 		Connection c = DBUtility.getConnection();
-		String sql = "SELECT * FROM bookmarks_new WHERE";
-		switch (sortBy) {
-		case 1:
-			sql += " rating > 0 AND ";
-			break;
-		case 2:
-			sql += " view_count > 1 AND ";
-			break;
-		case 3:
-			sql += " copy_count > 0 AND ";
-			break;
-		}
-		sql += " userID IN (SELECT userIDb FROM users_follow WHERE userIDa = ?) ORDER BY ";
-		switch (sortBy) {
-		case 1:
-			sql += "rating ";
-			break;
-		case 2:
-			sql += "view_count ";
-			break;
-		case 3:
-			sql += "copy_count ";
-			break;
-		case 4:
-			sql += "timestamp ";
-			break;
-		}
-		sql += " LIMIT 5 OFFSET ?";
+		String sql = "SELECT * FROM bookmarks_new WHERE "
+				+ " userID IN (SELECT userIDb FROM users_follow WHERE userIDa = ?)";
 		try {
 			PreparedStatement pst = c.prepareStatement(sql);
 			pst.setInt(1, userID);
-			pst.setInt(2, offset);
-			System.out.println("SQL: " + pst.toString());
 			ResultSet rs = pst.executeQuery();
 			while (rs.next()) {
 				AdvanceBookmark b = new AdvanceBookmark();
 				int bookmarkID = rs.getInt(1);
 				b.setBookmarkID(bookmarkID);
 				b.setPostedUserID(rs.getInt(6));
-				b.setUrl(rs.getString(2));
-				b.setTitle(rs.getString(3));
-				b.setDate(rs.getDate(7));
-				b.setViewTimes(rs.getInt(8));
-				b.setTotalRating(rs.getDouble(9));
-				b.setCopyTimes(rs.getInt(10));
-				System.out.println(isFollowed(userID, rs.getInt(6)));
-				b.setFriend(isFollowed(userID, rs.getInt(6)));
-				b.setTags(BookmarkSQL.getTaggedTags(bookmarkID, rs.getInt(6)));
 				b.setFirstName(UserSQL.getFirstNameByID(rs.getInt(6)));
 				b.setLastName(UserSQL.getLastNameByID(rs.getInt(6)));
-				b.setRated(getRateByUserID(userID, bookmarkID));
-				b.setCopied(BookmarkSQL.isCopied(userID, bookmarkID));
-				bookmarks.add(b);
+				b.setUrl(rs.getString(2));
+				b.setTitle(rs.getString(3));
+				b.setTags(BookmarkSQL.getTaggedTags(rs.getInt(1), rs.getInt(6)));
+				b.setSameTags(BookmarkSQL.sameTags(
+						UserSQL.getAllUsedTags(userID), b.getTags()));
+				b.setDate(rs.getDate(7));
+				b.setCopyTimes(rs.getInt(10));
+				b.setViewTimes(rs.getInt(8));
+				b.setTotalRating(rs.getDouble(9));
+				b.setRated(UserSQL.getRateByUserID(userID, rs.getInt(1)));
+				b.setFriend(UserSQL.isFollowed(userID, rs.getInt(6)));
+				b.setCopied(BookmarkSQL.isCopied(userID, rs.getInt(1)));
+				b.setPoint(0);
+				b.setRatedTimes(BookmarkSQL.getRatedTimes(rs.getInt(1)));
+				compareUltility.calculatePoint(b);
 			}
+			compareUltility.sort();
 		} catch (SQLException e) {
 			System.out.println("Get All Bookmark from friend: " + e);
 		} finally {
 			DBUtility.closeConnection(c);
 		}
 
-		return bookmarks;
+		return compareUltility.getSortedBookmarksByOffset(offset);
 	}
 
 	public static int editSubscription(int userID,

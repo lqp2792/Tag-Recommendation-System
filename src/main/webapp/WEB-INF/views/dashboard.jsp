@@ -84,7 +84,7 @@
 						<li><a href="#" id="add-bookmark-menu" data-toggle="modal"
 							data-target="#add-bookmark-modal"><i
 								class="fa fa-plus-square fa-fw"></i> Add Bookmark</a></li>
-						<li><a href="#" id="setting-menu"><i
+						<li><a href="settings" id="setting-menu"><i
 								class="fa fa-cog fa-fw"></i> Setting</a></li>
 					</ul>
 				</div>
@@ -240,6 +240,19 @@
 							</c:if>
 						</ul>
 					</div>
+					<div class="settings hidden">
+						<div class="row">
+							<div class="col-lg-12">
+								<div>
+									<ul class="nav nav-justified">
+										<li id="system-users"><a href="#">System Users</a></li>
+										<li id="change-password"><a href="#">Change Password</a></li>
+										<li id="profile"><a href="#">Profile</a></li>
+									</ul>
+								</div>
+							</div>
+						</div>
+					</div>
 				</div>
 				<div class="page-content">
 					<!-- =========================== -->
@@ -276,6 +289,30 @@
 					<div class="trending hidden">
 						<div style="text-align: center;">
 							<i class="fa fa-spinner fa-pulse fa-5x"></i>
+						</div>
+					</div>
+					<div class="settings hidden">
+						<div class="row">
+							<div class="col-md-5 col-md-offset-4 change-password-div hide">
+								<form id="change-password-form">
+									<div class="form-group">
+										<label class="control-label" for="old-password">Old Password:</label>
+										<input type="password" class="form-control" id="old-password"
+											placeholder="Old Password">
+									</div>
+									<div class="form-group">
+										<label class="control-label" for="new-password">New Password:</label>
+										<input type="password" class="form-control" id="new-password"
+											placeholder="New Password">
+									</div>
+									<div class="form-group">
+										<label class="control-label" for="new-password-confirm">New Password Confirm:</label>
+										<input type="password" class="form-control" id="new-password-confirm"
+											placeholder="New Password Confirm">
+									</div>
+									<button type="submit" class="btn btn-info btn-block">Change Password</button>
+								</form>
+							</div>
 						</div>
 					</div>
 				</div>

@@ -31,7 +31,6 @@ import phu.quang.le.Model.OnlineHistory;
 import phu.quang.le.Model.RecommendTag;
 import phu.quang.le.Model.Topic;
 import phu.quang.le.Model.User;
-import phu.quang.le.TopicModeling.ModelAvailableTagsPrepareThread;
 import phu.quang.le.TopicModeling.ModelLoadThread;
 import phu.quang.le.TopicModeling.ModelUtility;
 import phu.quang.le.Utility.BookmarkSQL;
@@ -58,10 +57,7 @@ public class PanelController {
 			return new ModelAndView("redirect:/");
 		} else {
 			System.out.println("Get Dashboard Page");
-			if (availableTags.size() == 0) {
-				(new ModelAvailableTagsPrepareThread()).start();
-			}
-			if (ModelUtility.model == null) {
+			if (!ModelUtility.isLoaded) {
 				(new ModelLoadThread()).start();
 			}
 			if (session.getAttribute("sortBy") == null) {
@@ -312,14 +308,13 @@ public class PanelController {
 	public @ResponseBody JsonResponse getAvailableTags(HttpSession session,
 			@RequestParam String term) {
 		List<String> filterdAvailableTags = new ArrayList<String>();
-		while(availableTags.size() == 0) {
-			
+		while (availableTags.size() == 0) {
+
 		}
 		JsonResponse rs = new JsonResponse();
 		for (int i = 0; i < availableTags.size(); i++) {
 			String tag = availableTags.get(i);
 			if (tag.startsWith(term.toLowerCase())) {
-				System.out.println("asdasd");
 				filterdAvailableTags.add(tag);
 			}
 		}
@@ -339,7 +334,7 @@ public class PanelController {
 			pst.setInt(1, userID);
 			pst.setString(2, feedback);
 			int result = pst.executeUpdate();
-			if(result > 0) {
+			if (result > 0) {
 				rs.setStatus("SUCCESS");
 				rs.setResult("Thanks you for your message!");
 			} else {

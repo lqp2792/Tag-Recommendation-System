@@ -123,42 +123,14 @@ public class BookmarkSQL {
 	public static List<AdvanceBookmark> discoverBookmarks(
 			List<Integer> subscriptionTopicIDs, int userID, int offset,
 			int sortBy) {
-		List<AdvanceBookmark> bookmarks = new ArrayList<AdvanceBookmark>();
+		CompareUltility compareUltility = new CompareUltility(sortBy, userID);
 		Connection c = DBUtility.getConnection();
-		/* Tạo SQL để sắp xếp các Bookmark theo thứ tự */
-		String sql = "SELECT * FROM bookmarks_new b WHERE bookmarkID IN (SELECT DISTINCT bookmarkID"
-				+ " FROM bookmark_topics WHERE ";
-		switch (sortBy) {
-		case 1:
-			sql += " rating > 0 AND ";
-			break;
-		case 2:
-			sql += " view_count > 1 AND ";
-			break;
-		case 3:
-			sql += " copy_count > 0 AND ";
-			break;
-		}
-		sql += " topicID IN (";
+		String sql = "SELECT * FROM bookmarks_new b WHERE bookmarkID IN (SELECT DISTINCT bookmarkID "
+				+ " FROM bookmark_topics WHERE topicID IN (";
 		for (int i = 0; i < subscriptionTopicIDs.size() - 1; i++) {
 			sql += "?,";
 		}
-		sql += "?)) AND b.userID <> ? AND b.userID NOT IN (SELECT userIDb FROM users_follow WHERE userIDa = ?) ORDER BY ";
-		switch (sortBy) {
-		case 1:
-			sql += "rating ";
-			break;
-		case 2:
-			sql += "view_count ";
-			break;
-		case 3:
-			sql += "copy_count ";
-			break;
-		case 4:
-			sql += "timestamp ";
-			break;
-		}
-		sql += "LIMIT 5 OFFSET ?";
+		sql += "?)) AND b.userID <> ? AND b.userID NOT IN (SELECT userIDb FROM users_follow WHERE userIDa = ?)";
 		System.out.println("Discovering Boookmarks");
 		try {
 			PreparedStatement pst = c.prepareStatement(sql);
@@ -169,67 +141,37 @@ public class BookmarkSQL {
 			}
 			pst.setInt(index, userID);
 			pst.setInt(index + 1, userID);
-			pst.setInt(index + 2, offset);
 			ResultSet rs = pst.executeQuery();
 			while (rs.next()) {
 				AdvanceBookmark b = new AdvanceBookmark();
-				List<String> tags = new ArrayList<String>();
 				int bookmarkID = rs.getInt(1);
 				b.setBookmarkID(bookmarkID);
 				b.setPostedUserID(rs.getInt(6));
+				b.setFirstName(UserSQL.getFirstNameByID(rs.getInt(6)));
+				b.setLastName(UserSQL.getLastNameByID(rs.getInt(6)));
 				b.setUrl(rs.getString(2));
 				b.setTitle(rs.getString(3));
+				b.setTags(BookmarkSQL.getTaggedTags(rs.getInt(1), rs.getInt(6)));
+				b.setSameTags(BookmarkSQL.sameTags(
+						UserSQL.getAllUsedTags(userID), b.getTags()));
 				b.setDate(rs.getDate(7));
+				b.setCopyTimes(rs.getInt(10));
 				b.setViewTimes(rs.getInt(8));
 				b.setTotalRating(rs.getDouble(9));
-				b.setCopyTimes(rs.getInt(10));
+				b.setRated(UserSQL.getRateByUserID(userID, rs.getInt(1)));
 				b.setFriend(UserSQL.isFollowed(userID, rs.getInt(6)));
-				String sql1 = "SELECT tag_content FROM user_tag_bookmark utb, tags_new t "
-						+ "WHERE userID = ? AND bookmarkID = ? AND utb.tagID = t.tagID";
-				PreparedStatement pst1 = c.prepareStatement(sql1);
-				pst1.setInt(1, rs.getInt(6));
-				pst1.setInt(2, bookmarkID);
-				ResultSet rs1 = pst1.executeQuery();
-				while (rs1.next()) {
-					tags.add(rs1.getString(1));
-				}
-				b.setTags(tags);
-				sql1 = "SELECT first_name, last_name FROM users WHERE id = ?";
-				pst1 = c.prepareStatement(sql1);
-				pst1.setInt(1, rs.getInt(6));
-				rs1 = pst1.executeQuery();
-				if (rs1.next()) {
-					b.setFirstName(rs1.getString(1));
-					b.setLastName(rs1.getString(2));
-				}
-				sql1 = "SELECT rating FROM user_rating WHERE userID = ? AND bookmarkID = ?";
-				pst1 = c.prepareStatement(sql1);
-				pst1.setInt(1, userID);
-				pst1.setInt(2, bookmarkID);
-				rs1 = pst1.executeQuery();
-				if (rs1.next()) {
-					b.setRated(rs1.getDouble(1));
-				} else {
-					b.setRated(0);
-				}
-				sql1 = "SELECT * FROM user_copy WHERE userID = ? AND bookmarkID = ?";
-				pst1 = c.prepareStatement(sql1);
-				pst1.setInt(1, userID);
-				pst1.setInt(2, bookmarkID);
-				rs1 = pst1.executeQuery();
-				if (rs1.next()) {
-					b.setCopied(true);
-				} else {
-					b.setCopied(false);
-				}
-				bookmarks.add(b);
+				b.setCopied(BookmarkSQL.isCopied(userID, rs.getInt(1)));
+				b.setPoint(0);
+				b.setRatedTimes(BookmarkSQL.getRatedTimes(rs.getInt(1)));
+				compareUltility.calculatePoint(b);
 			}
+			compareUltility.sort();
 		} catch (SQLException e) {
 			System.err.println("Discover Bookmark: " + e);
 		} finally {
 			DBUtility.closeConnection(c);
 		}
-		return bookmarks;
+		return compareUltility.getSortedBookmarksByOffset(offset);
 	}
 
 	public static int bookmarkClick(int bookmarkID) {

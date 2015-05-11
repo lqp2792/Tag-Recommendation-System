@@ -27,6 +27,9 @@ $(document).ready(function() {
 	if(document.URL.indexOf('trending') > -1) {
 		accessTrendingPage();
 	}
+	if(document.URL.indexOf('settings') > -1) {
+		accessSettingsPage();
+	}
 	/* =============================================== */
 	/*   Thực hiện chức năng search khi gõ vào input   */
 	/* =============================================== */
@@ -57,6 +60,17 @@ $(document).ready(function() {
 	$('#feedback-form').submit(function(e) {
 		e.preventDefault();
 		processFeedback();
+	});
+	/* =============================================== */
+	/*                  Change password                */
+	/* =============================================== */
+	$('#change-password').click(function(e) {
+		$('.change-password-div').removeClass('hide').addClass('show');
+	});
+	$('#change-password-form').submit(function(e) {
+		e.preventDefault();
+		$(this).find('button').html('<i class="fa fa-spinner fa-spin"></i> Processing');
+		processChangePasswordForm();
 	});
 });
 
@@ -151,7 +165,6 @@ function accessDashboardPage() {
 }
 
 function accessNetworkPage() {
-	// Khi click vào menu Network, thì sẽ mở trang mơi -> link bị thay đổi -> hàm ajax này sẽ chạy đầu tiên
 	$('.dashboard').removeClass('show').addClass('hidden');
 	$('.network').removeClass('hidden').addClass('show');
 	$.ajax({
@@ -160,44 +173,21 @@ function accessNetworkPage() {
 		data : {
 			'sortBy' : sortBy,
 			'offset' : offset
-		},
-		success : function(data) {
+		}, success : function(data) {
 			console.log(data);
 			var content = $('.network').eq(1);
-			$(content).html('<div class="row sort-by" style="padding-bottom: 18px; border-bottom: 1px solid #EEE;">' 
-					+ '<div class="col-lg-2"><h4 class="text-info"><i class="fa fa-sort"></i> Sort By:</h4></div><div class="col-lg-2"><button id="ar" class="btn btn-primary btn-block">Average Rating</button></div>' 
-					+ '<div class="col-lg-2 sort-method"><button id="vt" class="btn btn-primary btn-block">View Times</button></div>' 
-					+ '<div class="col-lg-2 sort-method"><button id="ct" class="btn btn-primary btn-block">Copy Times</button></div>' 
-					+ '<div class="col-lg-2 sort-method"><button id="pt" class="btn btn-primary btn-block">Posted Time</button</div></div>');
-			switch(sortBy) {
-			case 1: $('#ar').html('<i class="fa fa-check-circle"></i> Average Rating'); break;
-			case 2: $('#vt').html('<i class="fa fa-check-circle"></i> View Times'); break;
-				case 3: $('#ct').html('<i class="fa fa-check-circle"></i> Copy Times'); break;
-			case 4: $('#pt').html('<i class="fa fa-check-circle"></i> Posted Time'); break;
-			}
+			loadSortByBar(content, sortBy);
 			if(data.status == "SUCCESS") {
 				loadBookmarks(content, data);
 				$(content).append('<div id="loader" style="text-align: center;"><i class="fa fa-spinner fa-spin"></i> Loading...</div>');
 				offset += 5;
 				infiniteScroll(content);	
 			} 
-			if(data.status == "EMPTY") {
-				var inner = '<div class="row" style="margin-top: 25px"><div class="col-lg-12"><p class="text-center text-warning">';
-				if(sortBy == 1) {
-					inner += 'There are no bookmarks has average rating > 0 from friends';
-				}
-				if(sortBy == 2) {
-					inner += 'There are no bookmarks has view times > 0 from friend';
-				}
-				if(sortBy == 3) {
-					inner += 'There are no bookmarks has copy times > 0 from friends';
-				}
-				if(sortBy == 4) {
-					inner += 'There are no bookmarks has posted from friends';
-				}
-				inner += '</p></div></div>';
-				$(content).append(inner);
-			}
+		}, error: function(xhr, textStatus, error) {
+		      console.log(xhr.statusText);
+		      console.log(textStatus);
+		      console.log(error);
+		      bootbox.alert('<h4 class="text-center text-danger"><i class="fa fa-exclamation-triangle"></i> Something has happend while communicate with Server!</h4>')
 		}
 	});
 }
@@ -235,6 +225,11 @@ function accessDiscoverPage() {
 				$('#subscription-tags').html(inner);
 			}
 			discoverBookmarks(totalDiscoverTags);
+		}, error: function(xhr, textStatus, error) {
+		      console.log(xhr.statusText);
+		      console.log(textStatus);
+		      console.log(error);
+		      bootbox.alert('<h4 class="text-center text-danger"><i class="fa fa-exclamation-triangle"></i> Something has happend while communicate with Server!</h4>')
 		}
 	});
 }
@@ -273,8 +268,18 @@ function accessTrendingPage() {
 			    	container: '.urlive-container:eq('+ index + ')'
 		    	});   
 			});
+		}, error: function(xhr, textStatus, error) {
+		      console.log(xhr.statusText);
+		      console.log(textStatus);
+		      console.log(error);
+		      bootbox.alert('<h4 class="text-center text-danger"><i class="fa fa-exclamation-triangle"></i> Something has happend while communicate with Server!</h4>')
 		}
 	});
+}
+
+function accessSettingsPage() {
+	$('.dashboard').removeClass('show').addClass('hidden');	
+	$('.settings').removeClass('hidden').addClass('show');
 }
 /* =============================================== */
 $(document).ready(function() {
@@ -436,13 +441,15 @@ function infiniteScroll(content) {
 			data : ajaxData,
 			traditional : true,
 			success : function(data) {
+				loadSortByBar(content, sortBy);
 				loadBookmarks(content, data);
-				$('#loader').remove();
-				if (data.result.length == 5) {
+				if ((data.result.length % 5) == 0) {
 					$(content).append('<div id="loader" style="text-align: center;"><i class="fa fa-spinner fa-spin"></i> Loading...</div>');
 					offset += 5;
 				} else {
-					scene.remove();
+					if (typeof scene !== 'undefined') {
+					    scene.remove();
+					}
 					$(content).append('<div class="center-div"><h4><a href="#" id="backToTop"><i class="fa fa-reply"></i> There is no more Bookmarks</a></h4></div>');
 				}
 			}
@@ -906,20 +913,11 @@ function ajaxSortBy(sortBy) {
 				}
 			
 			}
-			if(data.status == "EMPTY") {
-				var inner = '<div class="row" style="margin-top: 25px"><div class="col-lg-12"><p class="text-center text-warning">';
-				if(sortBy == 1) {
-					inner += 'There are no bookmarks has average rating > 0';
-				}
-				if(sortBy == 2) {
-					inner += 'There are no bookmarks has view times > 0';
-				}
-				if(sortBy == 3) {
-					inner += 'There are no bookmarks has copy times > 0';
-				}
-				inner += '</p></div></div>';
-				$(content).append(inner);
-			}
+		}, error: function(xhr, textStatus, error) {
+		      console.log(xhr.statusText);
+		      console.log(textStatus);
+		      console.log(error);
+		      bootbox.alert('<h4 class="text-center text-danger"><i class="fa fa-exclamation-triangle"></i> Something has happend while communicate with Server!</h4>')
 		}
 	});
 }
@@ -932,7 +930,7 @@ function loadBookmarks(content, data) {
 		var ratingID = 'input-' + bookmark.bookmarkID;
 		console.log('Star Rating' + ratingID);
 		var inner = '<div class="bookmark">';
-		if($(content).hasClass('search')) {
+		if(!$(content).hasClass('dashboard')) {
 			inner += '<div class="row"><div class="col-lg-12"><h3>[<span class="text-info">Point: ' + bookmark.point.toFixed() + '</b></span>] ' + bookmark.title + '</h3></div></div>';
 		} else {
 			inner += '<div class="row"><div class="col-lg-12"><h3><span class="stt">' + (i+offset+1) + '</span> ' + bookmark.title + '</h3></div></div>';	
@@ -1410,37 +1408,13 @@ function discoverBookmarks(tags) {
 		success : function(data) {
 			console.log(data);
 			var content = $('.discover').eq(1);
-			$(content).html('<div class="row sort-by" style="padding-bottom: 18px; border-bottom: 1px solid #EEE;">' 
-					+ '<div class="col-lg-2"><h4 class="text-center"><i class="fa fa-sort"></i> Sort By:</h4></div><div class="col-lg-2"><button id="ar" class="btn btn-primary btn-block">Average Rating</button></div>' 
-					+ '<div class="col-lg-2 sort-method"><button id="vt" class="btn btn-primary btn-block">View Times</button></div>' 
-					+ '<div class="col-lg-2 sort-method"><button id="ct" class="btn btn-primary btn-block">Copy Times</button></div>' 
-					+ '<div class="col-lg-2 sort-method"><button id="pt" class="btn btn-primary btn-block">Posted Time</button</div></div>');
-			switch(sortBy) {
-			case 1: $('#ar').html('<i class="fa fa-check-circle"></i> Average Rating'); break;
-			case 2: $('#vt').html('<i class="fa fa-check-circle"></i> View Times'); break;
-			case 3: $('#ct').html('<i class="fa fa-check-circle"></i> Copy Times'); break;
-			case 4: $('#pt').html('<i class="fa fa-check-circle"></i> Posted Time'); break;
-			}
+			loadSortByBar(content, sortBy);
 			if(data.status == "SUCCESS") {
 				loadBookmarks(content, data);
 				$(content).append('<div id="loader" style="text-align: center;"><i class="fa fa-spinner fa-spin"></i> Loading...</div>');
 				offset += 5;
 				infiniteScroll(content);	
-			} 
-			if(data.status == "EMPTY") {
-				var inner = '<div class="row" style="margin-top: 25px"><div class="col-lg-12"><p class="text-center text-warning">';
-				if(sortBy == 1) {
-					inner += 'There are no bookmarks has average rating > 0';
-				}
-				if(sortBy == 2) {
-					inner += 'There are no bookmarks has view times > 0';
-				}
-				if(sortBy == 3) {
-					inner += 'There are no bookmarks has copy times > 0';
-				}
-				inner += '</p></div></div>';
-				$(content).append(inner);
-			}	
+			} 	
 		}
 	});
 }
@@ -1528,7 +1502,7 @@ function processUserSearchResult(data, searchInput) {
 		for(i=0; i<data.result.length; i++) {
 			var user = data.result[i];
 			mostUsedTags = user.mostUsedTags;
-			var inner = '<div class="row user">';
+			var inner = '<div class="row user user-item">';
 			inner += '<div class="col-lg-2 text-center">'
 			inner += '<img src="images/user.png" class="img-thumbnail" alt="User Default Avatar" style="min-height: 100px; height: 100px;">';
 			inner += '<input type="hidden" name="userID" class="userID" value=' + user.userID + '" />';
@@ -1668,7 +1642,6 @@ function processFeedback() {
 							$('#feedback-area').val('') ;
 						}
 					});
-					
 				} else {
 					bootbox.alert('<h4 class="text-center text-warning"><i class="fa fa-exclamation-triangle"></i>' + data.result + '</h4>');
 				}
@@ -1676,7 +1649,7 @@ function processFeedback() {
 			      console.log(xhr.statusText);
 			      console.log(textStatus);
 			      console.log(error);
-			      bootbox.alert('<h4 class="text-center text-danger"><i class="fa fa-exclamation-triangle"></i> Something has happend while communicate!</h4>')
+			      bootbox.alert('<h4 class="text-center text-danger"><i class="fa fa-exclamation-triangle"></i> Something has happend while communicate with Server!</h4>')
 			}
 		});
 	}
@@ -1700,4 +1673,95 @@ function loadSortByBar(element, sortBy) {
 	case 4: $('#ct').html('<i class="fa fa-check-circle"></i> Copy Times'); break;
 	case 5: $('#pt').html('<i class="fa fa-check-circle"></i> Posted Time'); break;
 	}
+}
+/* =============================================== */
+/*          Process Change Password Form           */
+/* =============================================== */
+function processChangePasswordForm() {
+	var isReady = true;
+	var message = null;
+	if(!$('#old-password').val()) {
+		message = '<p class="text-danger error-message"><i class="fa fa-exclamation-triangle"></i> Old Password can not be blank</p>';
+		showError($('#old-password'), message);
+		setTimeout(resetForm, 2000, $('#old-password')); 
+		isReady = false;
+	}
+	if(!$('#new-password').val()) {
+		message = '<p class="text-danger error-message"><i class="fa fa-exclamation-triangle"></i> New Password can not be blank</p>';
+		showError($('#new-password'), message);
+		setTimeout(resetForm, 2000, $('#new-password'));
+		isReady = false;
+	}
+	if(!$('#new-password-confirm').val()) {
+		message = '<p class="text-danger error-message"><i class="fa fa-exclamation-triangle"></i> Confirm new Password can not be blank</p>';
+		showError($('#new-password-confirm'), message);
+		setTimeout(resetForm, 2000, $('#new-password-confirm'));
+		isReady = false;
+	} else if ($('#new-password-confirm').val() != $('#new-password').val()) {
+		message = '<p class="text-danger error-message"><i class="fa fa-exclamation-triangle"></i> Confirm and new Password are not match</p>';
+		showError($('#new-password'), message);
+		setTimeout(resetForm, 2000, $('#new-password-confirm'));
+		isReady = false;
+	}
+	if(isReady === true) {
+		var oldPassword = $('#old-password').val();
+		var newPassword = $('#new-password').val();
+		$.ajax({
+			type : 'POST',
+			url : '/TagRecommend/settings/changePassword',
+			data : {
+				'oldPassword' : oldPassword,
+				'newPassword' : newPassword
+			}, success : function(data) {
+				$('#change-password-form').find('button').html('Change Password');
+				if(data.status == "SUCCESS") {
+					bootbox.alert({
+						message: '<h4 class="text-center text-info"><i class="fa fa-check-square-o"></i> ' + data.result + '</h4>',
+						callback : function() {
+							$('#old-password').val('') ;
+							$('#new-password').val('') ;
+							$('#new-password-confirm').val('') ;
+						}
+					});
+				} else {
+					bootbox.alert('<h4 class="text-center text-warning"><i class="fa fa-exclamation-triangle"></i> ' + data.result + '</h4>');
+				}
+			}, error: function(xhr, textStatus, error) {
+			      console.log(xhr.statusText);
+			      console.log(textStatus);
+			      console.log(error);
+			      bootbox.alert('<h4 class="text-center text-danger"><i class="fa fa-exclamation-triangle"></i> Something has happend while communicate with Server!</h4>')
+			}
+		});
+	} else {
+		$('#change-password-form').find('button').html('Change Password');
+	}
+}
+function showError(element, message) {
+	$(element).closest('.form-group').addClass('has-error').addClass('has-feedback');
+	$(element).after('<span class="glyphicon glyphicon-remove form-control-feedback"></span>');
+	$(element).after(message);
+}
+
+function resetForm(element) {
+	$(element).closest('.form-group').removeClass('has-error').removeClass('has-feedback');
+	$(element).closest('.form-group').find('span').remove();
+	$(element).closest('.form-group').find('p').remove();
+}
+
+/* =============================================== */
+/*                  Crypto Function                */
+/* =============================================== */
+function crypto() {
+//	var hashObj = new jsSHA("mySuperPassword", "ASCII");
+//	var password = hashObj.getHash("SHA-512", "HEX");
+//	$.jCryption.authenticate(password, "encrypt?generateKeyPair=true", "encrypt?handshake=true",
+//			function(AESKey) {
+//				$("#text,#encrypt,#decrypt,#serverChallenge").attr("disabled",false);
+//				$("#status").html('<span style="font-size: 16px;">Let\'s Rock!</span>');
+//			},
+//			function() {
+//				// Authentication failed
+//			}
+//	);
 }

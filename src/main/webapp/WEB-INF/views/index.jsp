@@ -91,7 +91,8 @@
 						</div>
 					</div>
 					<div class="modal-footer">
-						<button type="submit" class="btn btn-info btn-block">Login</button>
+						<button type="submit" class="btn btn-info btn-block"
+							id="<h4 class="text-center text-danger"><i class="fa fa-exclamation-triangle"></i> Something has happend while communicate with Server!</h4>">Login</button>
 					</div>
 				</form>
 			</div>
@@ -140,7 +141,8 @@
 						</div>
 					</div>
 					<div class="modal-footer">
-						<button type="submit" class="btn btn-info btn-block">Register</button>
+						<button type="submit" class="btn btn-info btn-block"
+							id="register-button" disabled="disabled">Register</button>
 					</div>
 				</form>
 			</div>
@@ -153,6 +155,8 @@
 	<script src="<c:url value="js/jquery.fittext.js"/>"></script>
 	<script src="<c:url value="js/jquery.lettering.js"/>"></script>
 	<script src="<c:url value="js/jquery.textillate.js"/>"></script>
+	<script src="<c:url value="js/sha.js"/>"></script>
+	<script src="<c:url value="js/jquery.jcryption.js"/>"></script>
 	<script src="<c:url value="js/main.js"/>"></script>
 </body>
 </html>

@@ -14,14 +14,6 @@ import cc.mallet.types.InstanceList;
 public class ModelAvailableTagsPrepareThread extends Thread {
 	@Override
 	public void run() {
-		synchronized (ModelUtility.syncObject) {
-			try {
-				System.out.println("Waiting for Loading Model Finished");
-				ModelUtility.syncObject.wait();
-			} catch (InterruptedException e) {
-				System.err.println("Waiting on loading Model Exception: " + e);
-			}
-		}
 		try {
 			System.out.println("Prepare Available Tags!");
 			InstanceList instances = InstanceList.load(new File(

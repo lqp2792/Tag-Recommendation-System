@@ -36,7 +36,7 @@ public class DiscoverController {
 			throws FileNotFoundException, ClassNotFoundException,
 			URISyntaxException, IOException {
 		if (session.getAttribute("userID") == null) {
-			return new ModelAndView("index");
+			return new ModelAndView("redirect:/");
 		} else {
 			if (session.getAttribute("sortBy") == null) {
 				session.setAttribute("sortBy", 4);
@@ -80,7 +80,11 @@ public class DiscoverController {
 			@RequestParam int offset, @RequestParam int sortBy) {
 		JsonResponse rs = new JsonResponse();
 		List<Integer> subscriptionTopicIDs = new ArrayList<>();
-
+		while (true) {
+			if (ModelUtility.isLoaded) {
+				break;
+			}
+		}
 		Alphabet dataAlphabet = ModelUtility.model.getAlphabet();
 		ArrayList<TreeSet<IDSorter>> topicSortedWords = ModelUtility.model
 				.getSortedWords();

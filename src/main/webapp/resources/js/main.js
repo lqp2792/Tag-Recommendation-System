@@ -1,3 +1,4 @@
+var password = null
 $(document).on('click', '#register-menu', function(e) {
 	$('#login-modal').modal('hide');
 	$('#first-name').val('');
@@ -9,6 +10,18 @@ $(document).on('click', '#login-menu', function(e) {
 	$('#register-modal').modal('hide');
 });
 $(document).ready(function(e) {
+	var hashObj = new jsSHA("lequangphu", "ASCII");
+	password = hashObj.getHash("SHA-512", "HEX");
+ 
+	$.jCryption.authenticate(password, "encrypt?generateKeyPair=true", "encrypt?handshake=true",
+			function(AESKey) {
+				$("#login-button, #register-button").attr("disabled",false);
+			},
+			function() {
+				bootbox.alert('<h4 class="text-center text-danger"><i class="fa fa-exclamation-triangle"></i> Encrypt Authentication Failed!</h4>');
+			}
+	);
+	
 	$('.tlt-h').textillate({
 		minDisplayTime: 7000,  
 	    out :{  delay: 3, effect: 'lightSpeedOut'},
@@ -126,8 +139,8 @@ function submitRegisterForm() {
 			data : {
 				'firstName' : $('#first-name').val(),
 				'lastName' : $('#last-name').val(),
-				'email' : $('#email-register').val(),
-				'password' : $('#password').val()
+				'encryptedEmail' : encryptText($('#email-register').val()),
+				'encryptedPassword' : encryptText($('#password').val())
 			}, success : function(data) {
 				$('#register-form').find('button').html('Register');
 				$('#register-modal').modal('hide');
@@ -162,4 +175,8 @@ function resetForm(element) {
 	$(element).closest('.form-group').removeClass('has-error').removeClass('has-feedback');
 	$(element).closest('.form-group').find('span').remove();
 	$(element).closest('.form-group').find('p').remove();
+}
+
+function encryptText(text) {
+	return $.jCryption.encrypt(text, password);
 }

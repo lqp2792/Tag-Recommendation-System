@@ -136,4 +136,12 @@ public class CompareUltility {
 		}
 		return null;
 	}
+
+	public List<AdvanceBookmark> getSortedBookmarksByOffset(int offset) {
+		if(sortedBookmarks.size() >= offset + 5) {
+			return sortedBookmarks.subList(0, offset + 5);
+		} else {
+			return sortedBookmarks;
+		}
+	}
 }
