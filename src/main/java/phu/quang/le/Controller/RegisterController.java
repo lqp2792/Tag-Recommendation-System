@@ -28,8 +28,6 @@ public class RegisterController {
 				.getAttribute("jCryptionKey");
 		String decryptedPassword = AesCtr.decrypt(encryptedPassword, key, 256);
 		String decryptedEmail = AesCtr.decrypt(encryptedEmail, key, 256);
-		System.out.println(decryptedEmail);
-		System.out.println(decryptedPassword);
 		JsonResponse rs = new JsonResponse();
 		System.out.println("Register New Account");
 		if (UserSQL.isAccountExisted(decryptedEmail)) {

@@ -14,7 +14,7 @@ import phu.quang.le.Model.AdvanceBookmark;
 import phu.quang.le.Model.Bookmark;
 import phu.quang.le.Model.OnlineHistory;
 import phu.quang.le.Model.RecommendUser;
-import phu.quang.le.Model.SearchUser;
+import phu.quang.le.Model.OtherUser;
 import phu.quang.le.Model.TagWeight;
 import phu.quang.le.Model.User;
 
@@ -115,7 +115,7 @@ public class UserSQL {
 			String email, String password) {
 		int result = -1;
 		Connection c = DBUtility.getConnection();
-		String sql = "INSERT INTO users VALUES (default, ?, ?, ?, ?)";
+		String sql = "INSERT INTO users VALUES (default, ?, ?, ?, ?, default)";
 		try {
 			PreparedStatement pst = c.prepareStatement(sql);
 			pst.setString(1, email);
@@ -194,12 +194,12 @@ public class UserSQL {
 	public static List<Bookmark> getAllBookmark(int userID, int offset) {
 		List<Bookmark> bookmarks = new ArrayList<Bookmark>();
 		Connection c = DBUtility.getConnection();
-		String sql = "SELECT * FROM bookmarks_new WHERE userID = ? LIMIT 5 OFFSET ?";
+		String sql = "SELECT * FROM bookmarks_new WHERE userID = ? LIMIT ?";
 		PreparedStatement pst;
 		try {
 			pst = c.prepareStatement(sql);
 			pst.setInt(1, userID);
-			pst.setInt(2, offset);
+			pst.setInt(2, offset + 5);
 			ResultSet rs = pst.executeQuery();
 			while (rs.next()) {
 				Bookmark b = new Bookmark();
@@ -606,8 +606,8 @@ public class UserSQL {
 		return onlineUsers;
 	}
 
-	public static List<SearchUser> search(String searchInput, int userID) {
-		List<SearchUser> users = new ArrayList<SearchUser>();
+	public static List<OtherUser> search(String searchInput, int userID) {
+		List<OtherUser> users = new ArrayList<OtherUser>();
 		String search = searchInput.substring(1).trim();
 		Connection c = DBUtility.getConnection();
 		String sql = "SELECT * FROM users WHERE ( lower(email) LIKE '%"
@@ -618,7 +618,7 @@ public class UserSQL {
 			pst.setInt(1, userID);
 			ResultSet rs = pst.executeQuery();
 			while (rs.next()) {
-				SearchUser u = new SearchUser();
+				OtherUser u = new OtherUser();
 				int targetID = rs.getInt(1);
 				u.setUserID(targetID);
 				u.setFirstName(rs.getString(4));
@@ -687,5 +687,76 @@ public class UserSQL {
 		}
 
 		return usedTags;
+	}
+
+	public static List<OtherUser> getFollowing(int userID) {
+		List<OtherUser> following = new ArrayList<OtherUser>();
+		Connection c = DBUtility.getConnection();
+		String sql = "SELECT * FROM users u, users_follow uf WHERE u.id = uf.userIDb AND uf.userIDa = ?";
+		try {
+			PreparedStatement pst = c.prepareStatement(sql);
+			pst.setInt(1, userID);
+			ResultSet rs = pst.executeQuery();
+			while (rs.next()) {
+				OtherUser u = new OtherUser();
+				int targetID = rs.getInt(1);
+				u.setUserID(targetID);
+				u.setFirstName(rs.getString(4));
+				u.setLastName(rs.getString(5));
+				if (rs.getInt(6) == 1) {
+					u.setOnline(true);
+				} else {
+					u.setOnline(false);
+				}
+				u.setMostUsedTags(getMostUsedTags(targetID));
+				u.setFollowed(true);
+				User user = userStatistic(targetID);
+				u.setFollowerCount(user.getFollowerCount());
+				u.setFollowingCount(user.getFollowingCount());
+				u.setBookmarkCount(user.getBookmarkCount());
+				following.add(u);
+			}
+		} catch (SQLException e) {
+			System.err.println("Search User Exception: " + e);
+		} finally {
+			DBUtility.closeConnection(c);
+		}
+
+		return following;
+	}
+
+	public static List<OtherUser> getFollower(int userID) {
+		List<OtherUser> follower = new ArrayList<OtherUser>();
+		Connection c = DBUtility.getConnection();
+		String sql = "SELECT * FROM users u, users_follow uf WHERE u.id = uf.userIDa AND uf.userIDb = ?";
+		try {
+			PreparedStatement pst = c.prepareStatement(sql);
+			pst.setInt(1, userID);
+			ResultSet rs = pst.executeQuery();
+			while (rs.next()) {
+				OtherUser u = new OtherUser();
+				int targetID = rs.getInt(1);
+				u.setUserID(targetID);
+				u.setFirstName(rs.getString(4));
+				u.setLastName(rs.getString(5));
+				if (rs.getInt(6) == 1) {
+					u.setOnline(true);
+				} else {
+					u.setOnline(false);
+				}
+				u.setMostUsedTags(getMostUsedTags(targetID));
+				u.setFollowed(isFollowed(userID, targetID));
+				User user = userStatistic(targetID);
+				u.setFollowerCount(user.getFollowerCount());
+				u.setFollowingCount(user.getFollowingCount());
+				u.setBookmarkCount(user.getBookmarkCount());
+				follower.add(u);
+			}
+		} catch (SQLException e) {
+			System.err.println("Search User Exception: " + e);
+		} finally {
+			DBUtility.closeConnection(c);
+		}
+		return follower;
 	}
 }

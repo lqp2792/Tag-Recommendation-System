@@ -18,11 +18,10 @@ import org.springframework.web.servlet.ModelAndView;
 
 import phu.quang.le.Model.AdditionalTag;
 import phu.quang.le.Model.AdvanceBookmark;
-import phu.quang.le.Model.Bookmark;
 import phu.quang.le.Model.JsonResponse;
+import phu.quang.le.Model.OtherUser;
 import phu.quang.le.Model.RateResult;
 import phu.quang.le.Model.RecommendUser;
-import phu.quang.le.Model.SearchUser;
 import phu.quang.le.Utility.BookmarkSQL;
 import phu.quang.le.Utility.DBUtility;
 import phu.quang.le.Utility.TagSQL;
@@ -44,10 +43,7 @@ public class NetworkController {
 			}
 			List<RecommendUser> recommendUsers = UserSQL
 					.getRecommendUsers(userID);
-			System.out.println(recommendUsers.toString());
-			Bookmark newBookmark = new Bookmark();
 			ModelAndView dashboard = new ModelAndView("dashboard");
-			dashboard.addObject("newBookmark", newBookmark);
 			dashboard.addObject("recommendUsers", recommendUsers);
 			dashboard.addObject("firstName", session.getAttribute("firstName"));
 			dashboard.addObject("lastName", session.getAttribute("lastName"));
@@ -276,7 +272,7 @@ public class NetworkController {
 				rs.setResult(bookmarks);
 			}
 		} else if (searchInput.charAt(0) == '@') {
-			List<SearchUser> users = UserSQL.search(searchInput, userID);
+			List<OtherUser> users = UserSQL.search(searchInput, userID);
 			if (users == null) {
 				rs.setStatus("FAIL");
 				rs.setResult("Something wrong was happen!");
@@ -303,6 +299,33 @@ public class NetworkController {
 			rs.setStatus("FAIL");
 			rs.setResult("Something wrong was happen!");
 		}
+		return rs;
+	}
+
+	@RequestMapping(value = "/systemUsers", method = RequestMethod.GET)
+	public @ResponseBody JsonResponse getSystemUsers(HttpSession session) {
+		JsonResponse rs = new JsonResponse();
+		List<Object> systemUsers = new ArrayList<Object>();
+		int userID = (int) session.getAttribute("userID");
+		systemUsers.add(UserSQL.getFollowing(userID));
+		systemUsers.add(UserSQL.getFollower(userID));
+		rs.setResult(systemUsers);
+		return rs;
+	}
+
+	@RequestMapping(value = "/recommendBookmarks", method = RequestMethod.GET)
+	public @ResponseBody JsonResponse getRecommendBookmarks(
+			HttpSession session, @RequestParam int bookmarkID) {
+		JsonResponse rs = new JsonResponse();
+		int userID = (int) session.getAttribute("userID");
+		List<AdvanceBookmark> recommendBookmarks = BookmarkSQL
+				.getRecommendBookmarks(bookmarkID, userID);
+		if (recommendBookmarks.size() > 0) {
+			rs.setStatus("SUCCESS");
+		} else {
+			rs.setStatus("EMPTY");
+		}
+		rs.setResult(recommendBookmarks);
 		return rs;
 	}
 }

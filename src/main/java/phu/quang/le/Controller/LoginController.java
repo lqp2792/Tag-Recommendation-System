@@ -5,6 +5,8 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 
+import javacryption.aes.AesCtr;
+
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpSession;
 
@@ -22,16 +24,22 @@ import phu.quang.le.Utility.UserSQL;
 public class LoginController {
 
 	@RequestMapping(value = "/login", method = RequestMethod.POST)
-	public @ResponseBody JsonResponse processLogin(@RequestParam String email,
-			@RequestParam String password, HttpServletRequest request) {
+	public @ResponseBody JsonResponse processLogin(HttpServletRequest req,
+			@RequestParam String encryptedEmail,
+			@RequestParam String encryptedPassword) {
+		HttpServletRequest request = (HttpServletRequest) req;
+		String key = (String) request.getSession().getServletContext()
+				.getAttribute("jCryptionKey");
+		String decryptedPassword = AesCtr.decrypt(encryptedPassword, key, 256);
+		String decryptedEmail = AesCtr.decrypt(encryptedEmail, key, 256);
 		JsonResponse rs = new JsonResponse();
 		HttpSession session = request.getSession();
 		Connection c = DBUtility.getConnection();
 		String sql = "SELECT * FROM users WHERE email = ? AND password = ?";
 		try {
 			PreparedStatement pst = c.prepareStatement(sql);
-			pst.setString(1, email);
-			pst.setString(2, password);
+			pst.setString(1, decryptedEmail);
+			pst.setString(2, decryptedPassword);
 			ResultSet result = pst.executeQuery();
 			if (!result.next()) {
 				rs.setStatus("FAIL");
@@ -40,7 +48,6 @@ public class LoginController {
 				rs.setStatus("SUCCESS");
 				String firstName = result.getString(4);
 				String lastName = result.getString(5);
-				session.setAttribute("email", email);
 				session.setAttribute("firstName", firstName);
 				session.setAttribute("lastName", lastName);
 				int userID = UserSQL.getUserID(firstName, lastName);

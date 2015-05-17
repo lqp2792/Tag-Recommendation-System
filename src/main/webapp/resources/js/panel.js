@@ -11,6 +11,7 @@ var subscriptionTags = [];
 var totalDiscoverTags = [];
 var taggedTags = [];
 var deletedTags = [];
+var dataLength = 0;
 /* =============================================== */
 /*        Thay đổi page content, page header       */
 /* =============================================== */
@@ -20,15 +21,21 @@ $(document).ready(function() {
 	}
 	if (document.URL.indexOf('network') > -1) {
 		accessNetworkPage();
+		processClickMenu(1);
 	}
 	if(document.URL.indexOf('discover') > -1) {
 		accessDiscoverPage();
+		processClickMenu(2)
 	}
 	if(document.URL.indexOf('trending') > -1) {
 		accessTrendingPage();
+		processClickMenu(3);
 	}
 	if(document.URL.indexOf('settings') > -1) {
 		accessSettingsPage();
+	}
+	if(document.URL.indexOf('evaluation') > -1) {
+		accessEvaluationPage();
 	}
 	/* =============================================== */
 	/*   Thực hiện chức năng search khi gõ vào input   */
@@ -65,12 +72,42 @@ $(document).ready(function() {
 	/*                  Change password                */
 	/* =============================================== */
 	$('#change-password').click(function(e) {
-		$('.change-password-div').removeClass('hide').addClass('show');
+		$('#change-password-div').removeClass('hide').addClass('show');
 	});
 	$('#change-password-form').submit(function(e) {
 		e.preventDefault();
 		$(this).find('button').html('<i class="fa fa-spinner fa-spin"></i> Processing');
 		processChangePasswordForm();
+	});
+	/* =============================================== */
+	/*          Xử lí view Bookmark iframe modal       */
+	/* =============================================== */
+	$(document).on('click', '.bookmark-link', function(e){
+		e.preventDefault();
+		var url = $(this).attr('href');
+		var title = $(this).closest('.bookmark').find('.stt').closest('h3').clone();
+		var bookmarkID = $(this).closest('.bookmark').find('.bookmarkID');
+		title = $(title).children().remove().end().text();
+		$('#view-bookmark').find('.modal-title').html('<h4 class="text-info">' + title + '</h4>');
+		$('#view-bookmark').find('.modal-title').append(bookmarkID);
+		$("#view-bookmark").find('.modal-body').html('<iframe width="100%" height="450px" frameborder="0" allowtransparency="true" src="'+url+'"></iframe>');
+	});
+	$('#view-bookmark').on('hidden.bs.modal', function(){
+		$(this).find('.modal-body').html('');
+	});
+	/* =============================================== */
+	/*          Lấy thêm Recommend Bookmark       */
+	/* =============================================== */
+	$('#view-bookmark').on('shown.bs.modal', function(e) {
+		setTimeout(getRecommendBookmarks, 5000);
+	});
+	/* =============================================== */
+	/*            Click System user - Setting          */
+	/* =============================================== */
+	$('#system-users').on('click', function(e) {
+		e.preventDefault();
+		$('#settings-loading').removeClass('hide').addClass('show');
+		getSystemUsers();
 	});
 });
 
@@ -86,6 +123,7 @@ function accessDashboardPage() {
 			if(data.status == "SUCCESS") {
 				$(content).html('');
 				loadBookmarks(content, data);
+				dataLength = data.result.length;
 				$(content).append('<div id="loader" style="text-align: center;"><i class="fa fa-spinner fa-spin"></i> Loading...</div>');
 				offset += 5;
 				infiniteScroll(content);	
@@ -179,6 +217,7 @@ function accessNetworkPage() {
 			loadSortByBar(content, sortBy);
 			if(data.status == "SUCCESS") {
 				loadBookmarks(content, data);
+				dataLength = data.result.length;
 				$(content).append('<div id="loader" style="text-align: center;"><i class="fa fa-spinner fa-spin"></i> Loading...</div>');
 				offset += 5;
 				infiniteScroll(content);	
@@ -213,6 +252,7 @@ function accessDiscoverPage() {
 				$('#subscription-tags').html(subscription);
 				$('.discover').eq(1).html('<p class="text-center text-info">System will use'
 										+ ' top most used tags for subscription as default!</p>');
+				$('.discover').eq(1).append('<div style="text-align: center;"><i class="fa fa-spinner fa-pulse fa-5x"></i></div>');
 				for(i=0; i<defaultSubscriptionTags.length; i++) {
 					totalDiscoverTags.push(defaultSubscriptionTags[i].tag);
 				}
@@ -256,9 +296,9 @@ function accessTrendingPage() {
 			$('.trending').eq(1).html('');
 			for(i=0; i<15; i=i+3) {
 				var inner = '<div class="row" style="border-bottom: 2px solid #EEE; padding-bottom: 10px">';
-				inner += '<div class="col-lg-4"><section class="trending-bookmark"><h4>' + data.result[i].url + '</h4></section><div class="urlive-container"></div></div>';
-				inner += '<div class="col-lg-4"><section class="trending-bookmark"><h4>' + data.result[i + 1].url + '</h4></section><div class="urlive-container"></div></div>';
-				inner += '<div class="col-lg-4"><section class="trending-bookmark"><h4>' + data.result[i + 2].url + '</h4></section><div class="urlive-container"></div></div>';
+				inner += '<div class="col-lg-4"><section class="trending-bookmark"><h4 class="hide">' + data.result[i].url + '</h4></section><div class="urlive-container"></div></div>';
+				inner += '<div class="col-lg-4"><section class="trending-bookmark"><h4 class="hide">' + data.result[i + 1].url + '</h4></section><div class="urlive-container"></div></div>';
+				inner += '<div class="col-lg-4"><section class="trending-bookmark"><h4 class="hide">' + data.result[i + 2].url + '</h4></section><div class="urlive-container"></div></div>';
 				inner += '</div>';
 				$('.trending').eq(1).append(inner);
 			}
@@ -280,6 +320,291 @@ function accessTrendingPage() {
 function accessSettingsPage() {
 	$('.dashboard').removeClass('show').addClass('hidden');	
 	$('.settings').removeClass('hidden').addClass('show');
+}
+
+function accessEvaluationPage() {
+	$('.dashboard').removeClass('show').addClass('hidden');	
+	$('.evaluation').removeClass('hidden').addClass('show');
+	var ctxA81 = $('#A81').get(0).getContext('2d');
+	var ctxA82 = $('#A82').get(0).getContext('2d');
+	var ctxA83 = $('#A83').get(0).getContext('2d');
+	var ctxA7 = $('#A7').get(0).getContext('2d');
+	var ctxA6 = $('#A6').get(0).getContext('2d');
+	$.ajax({
+		type : 'GET',
+		url : '/TagRecommend/evaluation/getA8Result',
+		success : function(data) {
+			var A81Data = [
+	            {
+	                value: data.result.a81Y,
+	                color:"#F7464A",
+	                highlight: "#FF5A5E",
+	                label: "Yes"
+	            },
+	            {
+	                value: data.result.a81N,
+	                color: "#46BFBD",
+	                highlight: "#5AD3D1",
+	                label: "No"
+	            }
+	        ];
+			var A82Data = [
+	            {
+	                value: data.result.a821,
+	                color:"#F7464A",
+	                highlight: "#FF5A5E",
+	                label: "1st Option"
+	            },
+	            {
+	                value: data.result.a822,
+	                color: "#46BFBD",
+	                highlight: "#5AD3D1",
+	                label: "2nd Option"
+	            },
+	            {
+	                value: data.result.a823,
+	                color: "#FDB45C",
+	                highlight: "#FFC870",
+	                label: "3rd Option"
+	            }
+	        ];
+			var A83Data = [
+	            {
+	                value: data.result.a83Y,
+	                color:"#F7464A",
+	                highlight: "#FF5A5E",
+	                label: "Yes"
+	            },
+	            {
+	                value: data.result.a83N,
+	                color: "#46BFBD",
+	                highlight: "#5AD3D1",
+	                label: "No"
+	            }
+	        ];
+			var options = {
+				    segmentShowStroke : true,
+				    segmentStrokeColor : "#fff",
+				    segmentStrokeWidth : 2,
+				    percentageInnerCutout : 0,
+				    animationSteps : 100,
+				    animationEasing : "easeOutBounce",
+				    animateRotate : true,
+				    animateScale : false,
+				    legendTemplate : "<ul class=\"<%=name.toLowerCase()%>-legend\"><% for (var i=0; i<segments.length; i++){%><li><span style=\"background-color:<%=segments[i].fillColor%>\"></span><%if(segments[i].label){%><%=segments[i].label%><%}%></li><%}%></ul>"
+				}
+			var A81Chart = new Chart(ctxA81).Pie(A81Data, options);
+			var A82Chart = new Chart(ctxA82).Pie(A82Data, options);
+			var A83Chart = new Chart(ctxA83).Pie(A83Data, options);
+		}
+	});
+	
+	$.ajax({
+		type : 'GET',
+		url : '/TagRecommend/evaluation/getA7Result',
+		success : function(data) {
+			var A7Data = {
+				labels: ["Satisfied", "Convinced", "Very Confident", "Confident", "A bit confused", "Can Trust"],
+				datasets: [
+		           {
+		               label: "System Total",
+		               fillColor: "rgba(151,187,205,0.2)",
+		               strokeColor: "rgba(151,187,205,1)",
+		               pointColor: "rgba(151,187,205,1)",
+		               pointStrokeColor: "#fff",
+		               pointHighlightFill: "#fff",
+		               pointHighlightStroke: "rgba(151,187,205,1)",
+		               data: [data.result.a76, data.result.a75, data.result.a74, data.result.a73, data.result.a72, data.result.a71]
+		           }
+	           ]
+			};
+			var options ={
+				    scaleShowLine : true,
+				    angleShowLineOut : true,
+				    scaleShowLabels : false,
+				    scaleBeginAtZero : true,
+				    angleLineColor : "rgba(0,0,0,.1)",
+				    angleLineWidth : 1,
+				    pointLabelFontFamily : "'Arial'",
+				    pointLabelFontStyle : "normal",
+				    pointLabelFontSize : 17,
+				    pointLabelFontColor : "#666",
+				    pointDot : true,
+				    pointDotRadius : 3,
+				    pointDotStrokeWidth : 1,
+				    pointHitDetectionRadius : 20,
+				    datasetStroke : true,
+				    datasetStrokeWidth : 2,
+				    datasetFill : true,
+				    legendTemplate : "<ul class=\"<%=name.toLowerCase()%>-legend\"><% for (var i=0; i<datasets.length; i++){%><li><span style=\"background-color:<%=datasets[i].strokeColor%>\"></span><%if(datasets[i].label){%><%=datasets[i].label%><%}%></li><%}%></ul>"
+				}
+			var A7Chart = new Chart(ctxA7).Radar(A7Data, options);
+		}
+	});
+	
+	$.ajax({
+		type : 'GET',
+		url : '/TagRecommend/evaluation/getA6Result',
+		success : function(data) {
+			var A6Data = [
+	            {
+	                value: data.result.a61,
+	                color:"#5571F2",
+	                highlight: "#3D5EF4",
+	                label: "Option 1"
+	            },
+	            {
+	                value: data.result.a62,
+	                color: "#55C2ED",
+	                highlight: "#3BBBED",
+	                label: "Option 2"
+	            },
+	            {
+	                value: data.result.a63,
+	                color: "#5CE0C2",
+	                highlight: "#30D9B1",
+	                label: "Option 3"
+	            },
+	            {
+	                value: data.result.a64,
+	                color: "#82E895",
+	                highlight: "#4BE367",
+	                label: "Option 4"
+	            },
+	            {
+	                value: data.result.a65,
+	                color: "#DDEB44",
+	                highlight: "#C3D12A",
+	                label: "Option 5"
+	            },
+	            {
+	                value: data.result.a66,
+	                color: "#D9962B",
+	                highlight: "#BA8125",
+	                label: "Option 6"
+	            }
+	        ];
+			
+			var options = {
+				    segmentShowStroke : true,
+				    segmentStrokeColor : "#fff",
+				    segmentStrokeWidth : 2,
+				    percentageInnerCutout : 50,
+				    animationSteps : 100,
+				    animationEasing : "easeOutBounce",
+				    animateRotate : true,
+				    animateScale : false,
+				    legendTemplate : "<ul class=\"<%=name.toLowerCase()%>-legend\"><% for (var i=0; i<segments.length; i++){%><li><span style=\"background-color:<%=segments[i].fillColor%>\"></span><%if(segments[i].label){%><%=segments[i].label%><%}%></li><%}%></ul>"
+				}
+			var A6Chart = new Chart(ctxA6).Pie(A6Data, options);
+		}
+	});
+	$.ajax({
+		type : 'GET',
+		url : '/TagRecommend/evaluation/getA1Result',
+		success : function(data) {
+			var A1 = data.result;
+			var A11chart = new CanvasJS.Chart("A11", {
+			      title:{
+			        text: "Recommendation Accuracy"              
+			      },
+			      data: [            
+			        { 
+			         type: "column",
+			         dataPoints: [
+			         { label: "Matched Interest", y: A1.a111 },
+			         { label: "Good Suggestion", y: A1.a112 },
+			         { label: "Not interested in", y: A1.a113 }                                    
+			         ]
+			       }
+			       ]
+		     });
+			var A12chart = new CanvasJS.Chart("A12", {
+			      title:{
+			        text: "Familiarity of Recommended Items"              
+			      },
+			      data: [            
+			        { 
+			         type: "column",
+			         dataPoints: [
+			         { label: "Some Familliar", y: A1.a121 },
+			         { label: "Not Familiar", y: A1.a122 }                                   
+			         ]
+			       }
+			       ]
+		     });
+			var A15chart = new CanvasJS.Chart("A15",
+					{
+						title:{
+							text: "Novelty of Recommender"
+						},
+				        animationEnabled: true,
+						legend:{
+							verticalAlign: "center",
+							horizontalAlign: "left",
+							fontSize: 16,
+							fontFamily: "Helvetica"        
+						},
+						theme: "theme2",
+						data: [
+						{        
+							type: "pie",       
+							indexLabelFontFamily: "Garamond",       
+							indexLabelFontSize: 16,
+							indexLabel: "{label}",
+							startAngle:-20,      
+							showInLegend: true,
+							toolTipContent:"{legendText}",
+							dataPoints: [
+								{  y: A1.a151, legendText:"Novel And Interesting", label: "Novel And Interesting" },
+								{  y: A1.a152, legendText:"Educational", label: "Educational" },
+								{  y: A1.a153, legendText:"Help discovering", label: "Help discovering" },
+								{  y: A1.a154, legendText:"Cant find new Items" , label: "Cant find new Items"}
+							]
+						}
+						]
+					});
+			var A134chart = new CanvasJS.Chart("A134", {
+				title:{
+					text:"Enjoyability and Attractiveness"				
+
+				},
+                animationEnabled: true,
+				axisX:{
+					interval: 1,
+					gridThickness: 0,
+					labelFontSize: 10,
+					labelFontStyle: "normal",
+					labelFontWeight: "normal",
+					labelFontFamily: "Lucida Sans Unicode"
+
+				},
+				axisY2:{
+					interlacedColor: "rgba(1,77,101,.2)",
+					gridColor: "rgba(1,77,101,.1)"
+
+				},
+
+				data: [
+				{     
+					type: "bar",
+	                name: "Metrics",
+					axisYType: "secondary",
+					color: "#014D65",				
+					dataPoints: [
+					{y: A1.a13Y, label: "Enjoyability"  },
+					{y: A1.a14Y, label: "Attractiveness"  }
+					]
+				}
+				
+				]
+			});
+		    A11chart.render();
+		    A12chart.render();
+		    A15chart.render();
+		    A134chart.render();
+		}
+	});
 }
 /* =============================================== */
 $(document).ready(function() {
@@ -441,12 +766,22 @@ function infiniteScroll(content) {
 			data : ajaxData,
 			traditional : true,
 			success : function(data) {
-				loadSortByBar(content, sortBy);
+				if(!$(content).hasClass('dashboard')) {
+					loadSortByBar(content, sortBy);	
+				} else {
+					$(content).html('');
+				}
 				loadBookmarks(content, data);
-				if ((data.result.length % 5) == 0) {
+				console.log('Last Length: ' + dataLength);
+				console.log('Data Length: ' + data.result.length);
+				if ((data.result.length % 5) == 0 && data.result.length > dataLength) {
+					dataLength = data.result.length;
 					$(content).append('<div id="loader" style="text-align: center;"><i class="fa fa-spinner fa-spin"></i> Loading...</div>');
 					offset += 5;
+					scene.remove();
+					infiniteScroll(content);
 				} else {
+					scene.removeClassToggle();
 					if (typeof scene !== 'undefined') {
 					    scene.remove();
 					}
@@ -454,7 +789,7 @@ function infiniteScroll(content) {
 				}
 			}
 		});
-		scene.update();
+		
 	}
 }
 /* =============================================== */
@@ -933,9 +1268,9 @@ function loadBookmarks(content, data) {
 		if(!$(content).hasClass('dashboard')) {
 			inner += '<div class="row"><div class="col-lg-12"><h3>[<span class="text-info">Point: ' + bookmark.point.toFixed() + '</b></span>] ' + bookmark.title + '</h3></div></div>';
 		} else {
-			inner += '<div class="row"><div class="col-lg-12"><h3><span class="stt">' + (i+offset+1) + '</span> ' + bookmark.title + '</h3></div></div>';	
+			inner += '<div class="row"><div class="col-lg-12"><h3><span class="stt">' + (i+1) + '</span> ' + bookmark.title + '</h3></div></div>';	
 		}
-		inner += '<div class="row"><div class="col-lg-9"><a class="bookmark-link" target="_blank" href="' + bookmark.url + '">' + bookmark.url + '</a></div>';
+		inner += '<div class="row"><div class="col-lg-9"><a class="bookmark-link" data-toggle="modal" data-target="#view-bookmark" href="' + bookmark.url + '">' + bookmark.url + '</a></div>';
 		inner += '<div class="col-lg-3 text-center"><p><b>Last Updated: ' + bookmark.date + '</b></p></div></div>';
 		inner += '<div class="row"><div class="col-lg-9"><div class="inline-div">';
 		inner += '<i class="fa fa-tags"></i> Tags: ';
@@ -975,7 +1310,7 @@ function loadBookmarks(content, data) {
 				inner += '<button class="btn btn-sm btn-success copy-bookmark"><i class="fa fa-files-o"></i> Copy (' + bookmark.copyTimes + ')</button>';	
 			}
 		}
-		inner += '<input type="hidden" name="bookmarkID" value="'+ bookmark.bookmarkID + '">';
+		inner += '<input type="hidden" class="bookmarkID" name="bookmarkID" value="'+ bookmark.bookmarkID + '">';
 		if($(content).hasClass('network') || $(content).hasClass('discover') || $(content).hasClass('search')) {
 			inner += '<input type="hidden" class="userID" name="postedUserID" value="' + bookmark.postedUserID + '" />';	
 		}
@@ -1071,7 +1406,16 @@ $(document).ready(function() {
 	});
 	$('#subscription-tag').autocomplete({
 		source : function(request, response) {
-			response($.ui.autocomplete.filter(availableTags, extractLast(request.term)));
+			$.ajax ({
+	        	type: 'GET',
+	        	url: "/TagRecommend/dashboard/availableTags",
+	        	data: {
+	        		'term': extractLast(request.term)
+	        	},
+	        	success: function( data ) {
+	        		response($.ui.autocomplete.filter(data.result, extractLast(request.term)));
+	        	}
+        	});
 		},
 		focus : function() {
 			return false;
@@ -1411,6 +1755,7 @@ function discoverBookmarks(tags) {
 			loadSortByBar(content, sortBy);
 			if(data.status == "SUCCESS") {
 				loadBookmarks(content, data);
+				dataLength = data.result.length;
 				$(content).append('<div id="loader" style="text-align: center;"><i class="fa fa-spinner fa-spin"></i> Loading...</div>');
 				offset += 5;
 				infiniteScroll(content);	
@@ -1609,6 +1954,10 @@ function follow(button) {
 					$(button).html('<i class="fa fa-user-plus"></i> Follow');
 				}
 			}
+			if($('.settings').hasClass('show')) {
+				window.location.reload(true);
+				$('#system-users-div').removeClass('hide').addClass('show');
+			}
 		}, error: function(xhr, textStatus, error) {
 		      console.log(xhr.statusText);
 		      console.log(textStatus);
@@ -1750,18 +2099,248 @@ function resetForm(element) {
 }
 
 /* =============================================== */
-/*                  Crypto Function                */
+/*          Get System Users - Setting             */
 /* =============================================== */
-function crypto() {
-//	var hashObj = new jsSHA("mySuperPassword", "ASCII");
-//	var password = hashObj.getHash("SHA-512", "HEX");
-//	$.jCryption.authenticate(password, "encrypt?generateKeyPair=true", "encrypt?handshake=true",
-//			function(AESKey) {
-//				$("#text,#encrypt,#decrypt,#serverChallenge").attr("disabled",false);
-//				$("#status").html('<span style="font-size: 16px;">Let\'s Rock!</span>');
-//			},
-//			function() {
-//				// Authentication failed
-//			}
-//	);
+function getSystemUsers() {
+	$.ajax({
+		type : 'GET',
+		url : '/TagRecommend/network/systemUsers',
+		success : function(data) {
+			if($('#change-password-div').hasClass('show')) {
+				$('#change-password-div').removeClass('show').addClass('hide');
+			}
+			$('#s-loading').removeClass('show').addClass('hide');
+			$('#system-users-div').removeClass('hide').addClass('show');
+			$('#system-users-div').html('<div class="row"><div class="following-users col-lg-6 "><h3 class="text-center text-info rounded">Following Users</h3></div>'+
+					'<div class="follower-users col-lg-6"><h3 class="text-center text-info rounded">Follower</h3></div></div>');
+			var content = $('#system-users-div').find('.following-users');
+			displaySystemUsers(content, data.result[0]);
+			var content = $('#system-users-div').find('.follower-users');
+			displaySystemUsers(content, data.result[1]);
+		
+		}, error: function(xhr, textStatus, error) {
+		      console.log(xhr.statusText);
+		      console.log(textStatus);
+		      console.log(error);
+		      bootbox.alert('<h4 class="text-center text-danger"><i class="fa fa-exclamation-triangle"></i> Something has happend while communicate with Server!</h4>')
+		}
+	});
+}
+
+function displaySystemUsers(content, users) {
+	for(i=0; i<users.length; i++) {
+		var user = users[i];
+		var inner = '<div class="row user user-item">';
+		inner += '<div class="col-lg-4 text-center">'
+		inner += '<img src="images/user.png" class="img-thumbnail" alt="User Default Avatar" style="min-height: 100px; height: 100px;">';
+		inner += '<input type="hidden" name="userID" class="userID" value=' + user.userID + '" />';
+		if(user.followed === false) {
+			inner += '<button class="btn btn-sm btn-warning follow" style="margin-top: 10px"><i class="fa fa-user-plus"></i> Follow</button>';
+		} else {
+			inner += '<button class="btn btn-sm btn-success follow" style="margin-top: 10px"><i class="fa fa-user-times"></i> Unfollow</button>';
+		}
+		inner += '</div>'; // end avatar image
+		inner += '<div class="col-lg-8">';
+		inner += '<h2>' + user.firstName + ' ' + user.lastName + '</h2>';
+		inner += '<h4 class="text-info">' + user.bookmarkCount + ' - Bookmark  ' + user.followingCount + ' -  Following ' + user.followerCount + ' - Follower</h4>';
+		if(user.online === true) {
+			inner += '<h4 class="text-info">Status :    <i class="fa fa-circle text-success"></i></h4>';
+		} else {
+			inner += '<h4 class="text-info">Status :    <i class="fa fa-circle text-danger"></i></h4>';
+		}
+		
+		inner += '</div></div>';
+		$(content).append(inner);
+	}
+}
+
+/* =============================================== */
+/*       Get Recommend Bookmarks when view         */
+/* =============================================== */
+function getRecommendBookmarks() {
+	var bookmarkID = $('#view-bookmark').find('.bookmarkID').attr('value');
+	$.ajax({
+		type : 'GET',
+		url : '/TagRecommend/network/recommendBookmarks',
+		data : {
+			'bookmarkID' : bookmarkID
+		}, success : function(data) {
+			console.log(data);
+			if(data.status == "SUCCESS") {
+				var footer = $('#view-bookmark').find('.modal-footer');
+				$(footer).html('<h4 class="text-center">Recommend Bookmarks</h4>');
+				var length = 0;
+				if(data.result.length > 5) {
+					length = 5;
+				} else {
+					length = data.result.length
+				}
+				for(i=0; i<length; i++) {
+					$(footer).append('<p class="text-center"><a href="' + data.result[i].url +'">' + data.result[i].title + '</a></p>');
+				}
+			}
+		}, error: function(xhr, textStatus, error) {
+		      console.log(xhr.statusText);
+		      console.log(textStatus);
+		      console.log(error);
+		      bootbox.alert('<h4 class="text-center text-danger"><i class="fa fa-exclamation-triangle"></i> Something has happend while communicate with Server!</h4>')
+		}
+	});
+}
+/* ============================================================================================== */
+/*      							 RECOMMENDER SURVEY PROCESS
+/* ============================================================================================== */
+$(document).ready(function(e){
+	checkShowA8();
+	$('#A8-survey-form').submit(function(e) {
+		e.preventDefault();
+		processA8();
+		$('#A8-survey-modal').modal('hide');
+	});
+	checkShowA7();
+	$('#A7-survey-form').submit(function(e) {
+		e.preventDefault();
+		processA7();
+		$('#A7-survey-modal').modal('hide');
+	});
+	checkShowA6();
+	$('#A6-survey-form').submit(function(e) {
+		e.preventDefault();
+		processA6();
+		$('#A6-survey-modal').modal('hide');
+	});
+	checkShowA1();
+	$('#A1-survey-form').submit(function(e) {
+		e.preventDefault();
+		processA1();
+		$('#A1-survey-modal').modal('hide');
+	});
+});
+/* =============================================== */
+/*          Check show survey Condidtion           */
+/* =============================================== */
+function checkShowA8() {
+	$.ajax({
+		type : 'GET',
+		url : '/TagRecommend/evaluation/showA8',
+		success : function(data) {
+			if(data.status == "SUCCESS") {
+				$('#A8-survey-modal').modal('show');
+			}
+		}
+	});
+};
+function checkShowA7() {
+	$.ajax({
+		type : 'GET',
+		url : '/TagRecommend/evaluation/showA7',
+		success : function(data) {
+			if(data.status == "SUCCESS") {
+				$('#A7-survey-modal').modal('show');
+			}
+		}
+	});
+};
+function checkShowA6() {
+	$.ajax({
+		type : 'GET',
+		url : '/TagRecommend/evaluation/showA6',
+		success : function(data) {
+			if(data.status == "SUCCESS") {
+				$('#A6-survey-modal').modal('show');
+			}
+		}
+	});
+};
+function checkShowA1() {
+	$.ajax({
+		type : 'GET',
+		url : '/TagRecommend/evaluation/showA1',
+		success : function(data) {
+			if(data.status == "SUCCESS") {
+				$('#A1-survey-modal').modal('show');
+			}
+		}
+	});
+};
+/* =============================================== */
+/*               Process submit Survey             */
+/* =============================================== */
+function processA8() {
+	$.ajax({
+		type : 'POST',
+		url : '/TagRecommend/evaluation/submitA8',
+		data : {
+			'A81' : $('input[name=A81]:checked', '#A8-survey-form').val(),
+			'A82' : $('input[name=A82]:checked', '#A8-survey-form').val(),
+			'A83' : $('input[name=A83]:checked', '#A8-survey-form').val()
+		}, success : function(data) {
+			if(data.status == 'SUCCESS') {
+				bootbox.alert('<h4 class="text-center text-info"><i class="fa fa-check-square-o"></i> ' + data.result + '</h4>');
+			} else {
+				bootbox.alert('<h4 class="text-center text-warning"><i class="fa fa-exclamation-triangle"></i>' + data.result + '</h4>');
+			}
+		}
+	});
+}
+function processA7() {
+	$.ajax({
+		type : 'POST',
+		url : '/TagRecommend/evaluation/submitA7',
+		data : {
+			'A7' : $('input[name=A7]:checked', '#A7-survey-form').val(),
+		}, success : function(data) {
+			if(data.status == 'SUCCESS') {
+				bootbox.alert('<h4 class="text-center text-info"><i class="fa fa-check-square-o"></i> ' + data.result + '</h4>');
+			} else {
+				bootbox.alert('<h4 class="text-center text-warning"><i class="fa fa-exclamation-triangle"></i>' + data.result + '</h4>');
+			}
+		}
+	});
+}
+function processA6() {
+	$.ajax({
+		type : 'POST',
+		url : '/TagRecommend/evaluation/submitA6',
+		data : {
+			'A6' : $('input[name=A6]:checked', '#A6-survey-form').val(),
+		}, success : function(data) {
+			if(data.status == 'SUCCESS') {
+				bootbox.alert('<h4 class="text-center text-info"><i class="fa fa-check-square-o"></i> ' + data.result + '</h4>');
+			} else {
+				bootbox.alert('<h4 class="text-center text-warning"><i class="fa fa-exclamation-triangle"></i>' + data.result + '</h4>');
+			}
+		}
+	});
+}
+function processA1() {
+	$.ajax({
+		type : 'POST',
+		url : '/TagRecommend/evaluation/submitA1',
+		data : {
+			'A11' : $('input[name=A11]:checked', '#A1-survey-form').val(),
+			'A12' : $('input[name=A12]:checked', '#A1-survey-form').val(),
+			'A13' : $('input[name=A13]:checked', '#A1-survey-form').val(),
+			'A14' : $('input[name=A14]:checked', '#A1-survey-form').val(),
+			'A15' : $('input[name=A15]:checked', '#A1-survey-form').val(),
+		}, success : function(data) {
+			if(data.status == 'SUCCESS') {
+				bootbox.alert('<h4 class="text-center text-info"><i class="fa fa-check-square-o"></i> ' + data.result + '</h4>');
+			} else {
+				bootbox.alert('<h4 class="text-center text-warning"><i class="fa fa-exclamation-triangle"></i>' + data.result + '</h4>');
+			}
+		}
+	});
+}
+
+function processClickMenu(menuID) {
+	$.ajax({
+		type : 'POST',
+		url : '/TagRecommend/evaluation/clickMenu',
+		data : {
+			'menuID' : menuID
+		}, success : function(data) {
+			
+		} 
+	})
 }

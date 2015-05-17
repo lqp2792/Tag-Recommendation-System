@@ -2,7 +2,7 @@ package phu.quang.le.Model;
 
 import java.util.List;
 
-public class SearchUser {
+public class OtherUser {
 	private int userID;
 	private String firstName;
 	private String lastName;

@@ -1,5 +1,4 @@
-<%@ page language="java" contentType="text/html; charset=ISO-8859-1"
-	pageEncoding="ISO-8859-1"%>
+<%@ page contentType="text/html; charset=UTF-8"%>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c"%>
 <%@ taglib prefix="form" uri="http://www.springframework.org/tags/form"%>
 <%@ page session="true"%>
@@ -81,6 +80,8 @@
 								class="fa fa-globe fa-fw"></i> Discover</a></li>
 						<li><a href="trending" id="trending-menu"><i
 								class="fa fa-star-o fa-fw"></i> Trending</a></li>
+						<li><a href="evaluation" id="evaluation-menu"><i
+								class="fa fa-area-chart fa-fw"></i> Evaluation</a></li>
 						<li><a href="#" id="add-bookmark-menu" data-toggle="modal"
 							data-target="#add-bookmark-modal"><i
 								class="fa fa-plus-square fa-fw"></i> Add Bookmark</a></li>
@@ -253,6 +254,12 @@
 							</div>
 						</div>
 					</div>
+					<!-- =========================== -->
+					<!-- Khi Xem system evaluation  -->
+					<!-- =========================== -->
+					<div class="evaluation hidden">
+						<h2 class="text-center text-primary">System Online Evaluation</h2>
+					</div>
 				</div>
 				<div class="page-content">
 					<!-- =========================== -->
@@ -293,25 +300,210 @@
 					</div>
 					<div class="settings hidden">
 						<div class="row">
-							<div class="col-md-5 col-md-offset-4 change-password-div hide">
+							<div class="hide" id="settings-loading"
+								style="text-align: center;">
+								<i class="fa fa-spinner fa-pulse fa-5x"></i>
+							</div>
+							<div class="hide" id="system-users-div"></div>
+							<div class="col-md-5 col-md-offset-4 hide"
+								id="change-password-div">
 								<form id="change-password-form">
 									<div class="form-group">
-										<label class="control-label" for="old-password">Old Password:</label>
-										<input type="password" class="form-control" id="old-password"
-											placeholder="Old Password">
+										<label class="control-label" for="old-password">Old
+											Password:</label> <input type="password" class="form-control"
+											id="old-password" placeholder="Old Password">
 									</div>
 									<div class="form-group">
-										<label class="control-label" for="new-password">New Password:</label>
-										<input type="password" class="form-control" id="new-password"
-											placeholder="New Password">
+										<label class="control-label" for="new-password">New
+											Password:</label> <input type="password" class="form-control"
+											id="new-password" placeholder="New Password">
 									</div>
 									<div class="form-group">
-										<label class="control-label" for="new-password-confirm">New Password Confirm:</label>
-										<input type="password" class="form-control" id="new-password-confirm"
-											placeholder="New Password Confirm">
+										<label class="control-label" for="new-password-confirm">New
+											Password Confirm:</label> <input type="password" class="form-control"
+											id="new-password-confirm" placeholder="New Password Confirm">
 									</div>
-									<button type="submit" class="btn btn-info btn-block">Change Password</button>
+									<button type="submit" class="btn btn-info btn-block">Change
+										Password</button>
 								</form>
+							</div>
+						</div>
+					</div>
+					<div class="evaluation hidden center-block">
+						<div class="A1-result row" style="margin-top: 15px">
+							<div class="row">
+								<div class="col-lg-12 rounded">
+									<h3 class="text-center">A1. Quality of Recommended Items
+										(Tags, Bookmark, Users) Evaluation</h3>
+								</div>
+								<div class="row" style="margin-top: 100px; text-align: center;">
+									<div class="col-lg-6">
+										<div id="A11" style="height: 300px; width: 100%;"></div>
+									</div>
+									<div class="col-lg-6">
+										<div id="A12" style="height: 300px; width: 100%;"></div>
+									</div>
+								</div>
+								<div class="row">
+									<div class="col-md-6">
+										<div id="A15" style="width: 100%; height: 300px"></div>
+									</div>
+									<div class="col-md-6">
+										<div id="A134" style="width: 100%; height: 300px"></div>
+									</div>
+								</div>
+							</div>
+						</div>
+						<!-- <div class="A2-result row" style="margin-top: 15px">
+							<div class="row">
+								<div class="col-lg-12 rounded">
+									<h3 class="text-center">A2. Interaction Adequacy
+										Evaluation</h3>
+								</div>
+								<div class="row" style="margin-top: 100px; text-align: center;">
+
+								</div>
+							</div>
+						</div>
+						<div class="A3-result row" style="margin-top: 15px">
+							<div class="row">
+								<div class="col-lg-12 rounded">
+									<h3 class="text-center">A3. Interface Adequacy Evaluation</h3>
+								</div>
+								<div class="row" style="margin-top: 100px; text-align: center;">
+
+								</div>
+							</div>
+						</div>
+						<div class="A4-result row" style="margin-top: 15px">
+							<div class="row">
+								<div class="col-lg-12 rounded">
+									<h3 class="text-center">A4. Perceived Ease of Use
+										Evaluation</h3>
+								</div>
+								<div class="row" style="margin-top: 100px; text-align: center;">
+
+								</div>
+							</div>
+						</div>
+						<div class="A5-result row" style="margin-top: 15px"> 
+							<div class="row">
+								<div class="col-lg-12 rounded">
+									<h3 class="text-center">A5. Perceived Usefulness
+										Evaluation</h3>
+								</div>
+								<div class="row" style="margin-top: 100px; text-align: center;">
+
+								</div>
+							</div>
+						</div> -->
+						<div class="A6-result row" style="margin-top: 15px">
+							<div class="row">
+								<div class="col-lg-12 rounded">
+									<h3 class="text-center">A2. Control / Transparency
+										Evaluation</h3>
+								</div>
+								<div class="row" style="margin-top: 100px;">
+									<div class="col-lg-8" style="text-align: center;">
+										<canvas id="A6" width="500" height="250px"></canvas>
+									</div>
+									<div class="col-lg-4">
+										<ul style="list-style-type: none;">
+											<li><i class="fa fa-square" style="color: #5571F2"></i>
+												Feeling in control of telling the recommender what I want</li>
+											<li><i class="fa fa-square" style="color: #55C2ED;"></i>
+												Don't Feel in control of telling the system what I want</li>
+											<li><i class="fa fa-square" style="color: #5CE0C2;"></i>
+												Don't feel in control of specifying and changing my
+												preferences</li>
+											<li><i class="fa fa-square" style="color: #82E895;"></i>
+												Understood why the items were recommended to me</li>
+											<li><i class="fa fa-square" style="color: #DDEB44;"></i>
+												The system helps me understand why the items were
+												recommended to me</li>
+											<li><i class="fa fa-square" style="color: #D9962B;"></i>
+												The system seems to control my decision process rather than
+												me</li>
+										</ul>
+									</div>
+								</div>
+							</div>
+						</div>
+						<div class="A7-result row" style="margin-top: 15px">
+							<div class="row">
+								<div class="col-lg-12 rounded">
+									<h3 class="text-center">A3. Attitudes Evaluation</h3>
+								</div>
+								<div class="row" style="margin-top: 100px; text-align: center;">
+									<div class="col-lg-12">
+										<canvas id="A7" width="600px" height="300px"></canvas>
+									</div>
+								</div>
+							</div>
+						</div>
+						<div class="A8-result row" style="margin-top: 15px">
+							<div class="row">
+								<div class="col-lg-12 rounded">
+									<h3 class="text-center">A4. Behavioral Intentions
+										Evaluation</h3>
+								</div>
+							</div>
+							<div class="row" style="margin-top: 25px">
+								<div class="col-lg-6">
+									<h4 class="rcorner">
+										<i class="fa fa-question-circle"></i> If a recommender such as
+										this exist, You will use it?
+									</h4>
+									<div class="col-lg-8">
+										<canvas id="A81" style="width: 100% height: 100%"></canvas>
+									</div>
+									<div class="col-lg-4">
+										<ul style="list-style-type: none;">
+											<li><i class="fa fa-square" style="color: #F7464A;"></i>
+												Yes</li>
+											<li><i class="fa fa-square" style="color: #46BFBD;"></i>
+												No</li>
+										</ul>
+									</div>
+								</div>
+								<div class="col-lg-6">
+									<h4 class="rcorner">
+										<i class="fa fa-question-circle"></i> Will you continue use
+										this Recommender?
+									</h4>
+									<div class="col-lg-7">
+										<canvas id="A82" style="width: 100% height: 100%"></canvas>
+									</div>
+									<div class="col-lg-5">
+										<ul style="list-style-type: none;">
+											<li><i class="fa fa-square" style="color: #F7464A;"></i>
+												I will use this Recommender again</li>
+											<li><i class="fa fa-square" style="color: #46BFBD;"></i>
+												I will use this type of Recommender frequently</li>
+											<li><i class="fa fa-square" style="color: #FDB45C;"></i>
+												I prefer to user this type of Recommender in the future</li>
+										</ul>
+									</div>
+								</div>
+							</div>
+							<div class="row">
+								<div class="col-md-6 col-md-offset-3">
+									<h4 class="rcorner">
+										<i class="fa fa-question-circle"></i> You will tell your
+										friends about this recommender?
+									</h4>
+									<div class="col-lg-7">
+										<canvas id="A83" style="width: 100% height: 100%"></canvas>
+									</div>
+									<div class="col-lg-5">
+										<ul style="list-style-type: none;">
+											<li><i class="fa fa-square" style="color: #F7464A;"></i>
+												Yes</li>
+											<li><i class="fa fa-square" style="color: #46BFBD;"></i>
+												No</li>
+										</ul>
+									</div>
+								</div>
 							</div>
 						</div>
 					</div>
@@ -441,7 +633,6 @@
 				</div>
 			</div>
 		</div>
-
 		<!-- Add Tag vào Bookmark của người dùng khác  -->
 		<div class="modal fade" id="nw-add-tag-modal" tabindex="-1"
 			role="dialog" aria-labelledby="nwAddTagModalLabel" aria-hidden="true">
@@ -459,7 +650,6 @@
 				</div>
 			</div>
 		</div>
-
 		<!-- Edit Tag bookmark của mình  -->
 		<div class="modal fade" id="edit-modal" tabindex="-1" role="dialog"
 			aria-labelledby="editModalLabel" aria-hidden="true">
@@ -534,6 +724,7 @@
 			aria-hidden="true">
 			<div class="modal-dialog">
 				<div class="modal-content">
+
 					<div class="modal-body">
 						<form role="form" id="subscription-form" class="form-inline">
 							<div class="form-group has-feedback">
@@ -556,6 +747,424 @@
 			</div>
 		</div>
 
+		<!-- ========== Xem link trong một iframe modal ========== -->
+		<div class="modal fade" id="view-bookmark" tabindex="-1" role="dialog"
+			aria-labelledby="viewLinkLabel" aria-hidden="true">
+			<div class="modal-dialog modal-lg">
+				<div class="modal-content">
+					<div class="modal-header">
+						<button type="button" class="close" data-dismiss="modal"
+							aria-label="Close">
+							<span aria-hidden="true">&times;</span>
+						</button>
+						<h4 class="modal-title text-center">View Bookmark</h4>
+					</div>
+					<div class="modal-body"></div>
+					<div class="modal-footer"></div>
+				</div>
+			</div>
+		</div>
+		<!-- ========== Survey ========== -->
+		<div class="modal fade" id="A8-survey-modal" tabindex="-1"
+			role="dialog" aria-labelledby="A8SurveyModalLabel" aria-hidden="true"
+			data-backdrop="static">
+			<div class="modal-dialog">
+				<form role="form" id="A8-survey-form">
+					<div class="modal-content">
+						<div class="modal-header ">
+							<button type="button" class="close" data-dismiss="modal"
+								aria-label="Close">
+								<span aria-hidden="true">&times;</span>
+							</button>
+							<div class="modal-title text-center">
+								<h3 class="text-primary">Behavioral Intention Survey</h3>
+								<small class="text-warning">Please help me finish this
+									Survey. This survey plays an important part of my graduate
+									research!</small>
+							</div>
+						</div>
+						<div class="modal-body">
+							<div class="row">
+								<div class="col-lg-12">
+									<h4>1. If a recommender such as this exist, You will use
+										it to share your Bookmarks</h4>
+									<div class="radio">
+										<label><input type="radio" name="A81" value="1"
+											checked>Yes</label>
+									</div>
+									<div class="radio">
+										<label><input type="radio" name="A81" value="0">No</label>
+									</div>
+								</div>
+							</div>
+							<div class="row">
+								<div class="col-lg-12">
+									<h4>2. Will you continue use this Recommender</h4>
+									<div class="radio">
+										<label><input type="radio" name="A82" value="1"
+											checked>I will use this Recommender again</label>
+									</div>
+									<div class="radio">
+										<label><input type="radio" name="A82" value="2">I
+											will use this type of Recommender frequently</label>
+									</div>
+									<div class="radio">
+										<label><input type="radio" name="A82" value="3">I
+											prefer to user this type of Recommender in the future</label>
+									</div>
+								</div>
+							</div>
+							<div class="row">
+								<div class="col-lg-12">
+									<h4>3. You will tell your friends about this recommender</h4>
+									<div class="radio">
+										<label><input type="radio" name="A83" value="1"
+											checked>Yes</label>
+									</div>
+									<div class="radio">
+										<label><input type="radio" name="A83" value="0">No</label>
+									</div>
+								</div>
+							</div>
+							<div class="modal-footer">
+								<button type="submit" class="btn btn-info btn-block">Finish
+									Survey</button>
+							</div>
+						</div>
+					</div>
+				</form>
+			</div>
+		</div>
+		<!-- 	Survey 7   -->
+		<div class="modal fade" id="A7-survey-modal" tabindex="-1"
+			role="dialog" aria-labelledby="A7SurveyModalLabel" aria-hidden="true"
+			data-backdrop="static">
+			<div class="modal-dialog">
+				<form role="form" id="A7-survey-form">
+					<div class="modal-content">
+						<div class="modal-header ">
+							<button type="button" class="close" data-dismiss="modal"
+								aria-label="Close">
+								<span aria-hidden="true">&times;</span>
+							</button>
+							<div class="modal-title text-center">
+								<h3 class="text-primary">Attitudes Survey</h3>
+								<small class="text-warning">Please help me finish this
+									Survey. This survey plays an important part of my graduate
+									research!</small>
+							</div>
+						</div>
+						<div class="modal-body">
+							<div class="row">
+								<div class="col-lg-12">
+									<h4>How do you feel about my System?</h4>
+									<div class="radio">
+										<label><input type="radio" name="A7" value="1" checked>Overall,
+											I am satisfied with the recommender.</label>
+									</div>
+									<div class="radio">
+										<label><input type="radio" name="A7" value="2">I
+											am convinced of the items recommended to me</label>
+									</div>
+									<div class="radio">
+										<label><input type="radio" name="A7" value="3">I
+											am confident I will like the items recommended to me.</label>
+									</div>
+									<div class="radio">
+										<label><input type="radio" name="A7" value="4">The
+											recommender made me more confident</label>
+									</div>
+									<div class="radio">
+										<label><input type="radio" name="A7" value="5">The
+											recommended items made me confused a bit</label>
+									</div>
+									<div class="radio">
+										<label><input type="radio" name="A7" value="6">The
+											recommender can be trusted somehow</label>
+									</div>
+								</div>
+							</div>
+							<div class="modal-footer">
+								<button type="submit" class="btn btn-info btn-block">Finish
+									Survey</button>
+							</div>
+						</div>
+					</div>
+				</form>
+			</div>
+		</div>
+		<!-- 	Survey 6   -->
+		<div class="modal fade" id="A6-survey-modal" tabindex="-1"
+			role="dialog" aria-labelledby="A6SurveyModalLabel" aria-hidden="true"
+			data-backdrop="static">
+			<div class="modal-dialog">
+				<form role="form" id="A6-survey-form">
+					<div class="modal-content">
+						<div class="modal-header ">
+							<button type="button" class="close" data-dismiss="modal"
+								aria-label="Close">
+								<span aria-hidden="true">&times;</span>
+							</button>
+							<div class="modal-title text-center">
+								<h3 class="text-primary">Control / Transparency Survey</h3>
+								<small class="text-warning">Please help me finish this
+									Survey. This survey plays an important part of my graduate
+									research!</small>
+							</div>
+						</div>
+						<div class="modal-body">
+							<div class="row">
+								<div class="col-lg-12">
+									<h4>How do you feel about my System?</h4>
+									<div class="radio">
+										<label><input type="radio" name="A6" value="1" checked>I
+											feel in control of telling the recommender what I want.</label>
+									</div>
+									<div class="radio">
+										<label><input type="radio" name="A6" value="2">I
+											don't feel in control of telling the system what I want</label>
+									</div>
+									<div class="radio">
+										<label><input type="radio" name="A6" value="3">I
+											don't feel in control of specifying and changing my
+											preferences</label>
+									</div>
+									<div class="radio">
+										<label><input type="radio" name="A6" value="4">I
+											understood why the items were recommended to me.</label>
+									</div>
+									<div class="radio">
+										<label><input type="radio" name="A6" value="5">The
+											system helps me understand why the items were recommended to
+											me.</label>
+									</div>
+									<div class="radio">
+										<label><input type="radio" name="A6" value="6">The
+											system seems to control my decision process rather than me</label>
+									</div>
+								</div>
+							</div>
+							<div class="modal-footer">
+								<button type="submit" class="btn btn-info btn-block">Finish
+									Survey</button>
+							</div>
+						</div>
+					</div>
+				</form>
+			</div>
+		</div>
+		<!-- 	Survey 5   -->
+		<div class="modal fade" id="A5-survey-modal" tabindex="-1"
+			role="dialog" aria-labelledby="A5SurveyModalLabel" aria-hidden="true"
+			data-backdrop="static">
+			<div class="modal-dialog">
+				<form role="form" id="A5-survey-form">
+					<div class="modal-content">
+						<div class="modal-header ">
+							<button type="button" class="close" data-dismiss="modal"
+								aria-label="Close">
+								<span aria-hidden="true">&times;</span>
+							</button>
+							<div class="modal-title text-center">
+								<h3 class="text-primary">Attitudes Survey</h3>
+								<small class="text-warning">Please help me finish this
+									Survey. This survey plays an important part of my graduate
+									research!</small>
+							</div>
+						</div>
+						<div class="modal-body">
+							<div class="row"></div>
+							<div class="modal-footer">
+								<button type="submit" class="btn btn-info btn-block">Finish
+									Survey</button>
+							</div>
+						</div>
+					</div>
+				</form>
+			</div>
+		</div>
+		<!-- 	Survey 4   -->
+		<div class="modal fade" id="A4-survey-modal" tabindex="-1"
+			role="dialog" aria-labelledby="A4SurveyModalLabel" aria-hidden="true"
+			data-backdrop="static">
+			<div class="modal-dialog">
+				<form role="form" id="A4-survey-form">
+					<div class="modal-content">
+						<div class="modal-header ">
+							<button type="button" class="close" data-dismiss="modal"
+								aria-label="Close">
+								<span aria-hidden="true">&times;</span>
+							</button>
+							<div class="modal-title text-center">
+								<h3 class="text-primary">Attitudes Survey</h3>
+								<small class="text-warning">Please help me finish this
+									Survey. This survey plays an important part of my graduate
+									research!</small>
+							</div>
+						</div>
+						<div class="modal-body">
+							<div class="row"></div>
+							<div class="modal-footer">
+								<button type="submit" class="btn btn-info btn-block">Finish
+									Survey</button>
+							</div>
+						</div>
+					</div>
+				</form>
+			</div>
+		</div>
+		<!-- 	Survey 3   -->
+		<div class="modal fade" id="A3-survey-modal" tabindex="-1"
+			role="dialog" aria-labelledby="A3SurveyModalLabel" aria-hidden="true"
+			data-backdrop="static">
+			<div class="modal-dialog">
+				<form role="form" id="A3-survey-form">
+					<div class="modal-content">
+						<div class="modal-header ">
+							<button type="button" class="close" data-dismiss="modal"
+								aria-label="Close">
+								<span aria-hidden="true">&times;</span>
+							</button>
+							<div class="modal-title text-center">
+								<h3 class="text-primary">Attitudes Survey</h3>
+								<small class="text-warning">Please help me finish this
+									Survey. This survey plays an important part of my graduate
+									research!</small>
+							</div>
+						</div>
+						<div class="modal-body">
+							<div class="row"></div>
+							<div class="modal-footer">
+								<button type="submit" class="btn btn-info btn-block">Finish
+									Survey</button>
+							</div>
+						</div>
+					</div>
+				</form>
+			</div>
+		</div>
+		<!-- 	Survey 2   -->
+		<div class="modal fade" id="A2-survey-modal" tabindex="-1"
+			role="dialog" aria-labelledby="A2SurveyModalLabel" aria-hidden="true"
+			data-backdrop="static">
+			<div class="modal-dialog">
+				<form role="form" id="A2-survey-form">
+					<div class="modal-content">
+						<div class="modal-header ">
+							<button type="button" class="close" data-dismiss="modal"
+								aria-label="Close">
+								<span aria-hidden="true">&times;</span>
+							</button>
+							<div class="modal-title text-center">
+								<h3 class="text-primary">Attitudes Survey</h3>
+								<small class="text-warning">Please help me finish this
+									Survey. This survey plays an important part of my graduate
+									research!</small>
+							</div>
+						</div>
+						<div class="modal-body">
+							<div class="row"></div>
+							<div class="modal-footer">
+								<button type="submit" class="btn btn-info btn-block">Finish
+									Survey</button>
+							</div>
+						</div>
+					</div>
+				</form>
+			</div>
+		</div>
+		<!-- 	Survey 1   -->
+		<div class="modal fade" id="A1-survey-modal" tabindex="-1"
+			role="dialog" aria-labelledby="A1SurveyModalLabel" aria-hidden="true"
+			data-backdrop="static">
+			<div class="modal-dialog">
+				<form role="form" id="A1-survey-form">
+					<div class="modal-content">
+						<div class="modal-header ">
+							<button type="button" class="close" data-dismiss="modal"
+								aria-label="Close">
+								<span aria-hidden="true">&times;</span>
+							</button>
+							<div class="modal-title text-center">
+								<h3 class="text-primary">Quality of Recommended Items
+									Survey</h3>
+								<small class="text-warning">Please help me finish this
+									Survey. This survey plays an important part of my graduate
+									research!</small>
+							</div>
+						</div>
+						<div class="modal-body">
+							<div class="row">
+								<div class="col-lg-12">
+									<h4>Accuracy</h4>
+									<div class="radio">
+										<label><input type="radio" name="A11" value="1"
+											checked>The items recommended to me matched my
+											interests.</label>
+									</div>
+									<div class="radio">
+										<label><input type="radio" name="A11" value="2">The
+											recommender gave me good suggestions.</label>
+									</div>
+									<div class="radio">
+										<label><input type="radio" name="A11" value="3">I
+											am not interested in the items recommended to me</label>
+									</div>
+									<h4>Familiarity</h4>
+									<div class="radio">
+										<label><input type="radio" name="A12" value="1"
+											checked>Some of the recommended items are familiar to
+											me</label>
+									</div>
+									<div class="radio">
+										<label><input type="radio" name="A12" value="2">I
+											am not familiar with the items that were recommended to me</label>
+									</div>
+									<h4>The items recommended to you are attractive?</h4>
+									<div class="radio">
+										<label><input type="radio" name="A13" value="1"
+											checked>Yes</label>
+									</div>
+									<div class="radio">
+										<label><input type="radio" name="A13" value="0">No</label>
+									</div>
+									<h4>Did you enjoy the items recommended to you?</h4>
+									<div class="radio">
+										<label><input type="radio" name="A14" value="1"
+											checked>Yes</label>
+									</div>
+									<div class="radio">
+										<label><input type="radio" name="A14" value="0">No</label>
+									</div>
+									<h4>Novelty</h4>
+									<div class="radio">
+										<label><input type="radio" name="A15" value="1"
+											checked>The items recommended to me are novel and
+											interesting.</label>
+									</div>
+									<div class="radio">
+										<label><input type="radio" name="A15" value="2">The
+											recommender system is educational.</label>
+									</div>
+									<div class="radio">
+										<label><input type="radio" name="A15" value="3">The
+											recommender system helps me discover new contents</label>
+									</div>
+									<div class="radio">
+										<label><input type="radio" name="A15" value="4">I
+											could not find new items through the recommender</label>
+									</div>
+								</div>
+							</div>
+							<div class="modal-footer">
+								<button type="submit" class="btn btn-info btn-block">Finish
+									Survey</button>
+							</div>
+						</div>
+					</div>
+				</form>
+			</div>
+		</div>
 	</div>
 	<script src="js/jquery.js"></script>
 	<script src="js/jquery-ui.min.js"></script>
@@ -570,6 +1179,9 @@
 	<script src="js/star-rating.js"></script>
 	<script src="js/jquery.lettering.js"></script>
 	<script src="js/jquery.textillate.js"></script>
+	<script src="js/Chart.js"></script>
+	<script src="js/canvasjs.min.js"></script>
 	<script src="js/panel.js"></script>
+
 </body>
 </html>

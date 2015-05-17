@@ -133,7 +133,9 @@ margin-top
 
 
 
+
  
+
 
 
 
@@ -159,7 +161,9 @@ margin-top
 
 
 
+
  
+
 
 
 
@@ -198,6 +202,8 @@ px
 
 
 
+
+
 ;
 margin-bottom
 
@@ -212,7 +218,9 @@ margin-bottom
 
 
 
+
  
+
 
 
 
@@ -238,7 +246,9 @@ margin-bottom
 
 
 
+
  
+
 
 
 
@@ -253,6 +263,8 @@ margin-bottom
 
 5
 px
+
+
 
 
 
@@ -374,4 +386,18 @@ h1, h2, h3, h4, h5, h6 {
 
 .ui-autocomplete-loading {
 	background: url('../images/ajax-loader.gif') no-repeat right center
+}
+
+.rounded {
+	background-color: #666;
+	color: #fff;
+	font-weight: bold;
+	padding: 5px;
+	-moz-border-radius: 5px;
+	-webkit-border-radius: 5px;
+}
+.rcorner {
+    border-radius: 25px;
+    border: 2px solid #8AC007;
+    padding: 20px;
 }

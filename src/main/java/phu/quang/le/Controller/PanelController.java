@@ -38,7 +38,6 @@ import phu.quang.le.Utility.DBUtility;
 import phu.quang.le.Utility.TagSQL;
 import phu.quang.le.Utility.UrlUtility;
 import phu.quang.le.Utility.UserSQL;
-import cc.mallet.topics.ParallelTopicModel;
 import cc.mallet.topics.TopicInferencer;
 import cc.mallet.types.Instance;
 import cc.mallet.types.InstanceList;
@@ -156,21 +155,19 @@ public class PanelController {
 				}
 				System.out.println("Meta description : " + description);
 			}
-			// Infer topic for url
-			ParallelTopicModel model = ModelUtility.getTopicModel();
 			InstanceList instances = new InstanceList(ModelUtility.getPipe());
-			TopicInferencer inferencer = model.getInferencer();
+			TopicInferencer inferencer = ModelUtility.model.getInferencer();
 			instances.addThruPipe(new Instance(title + " " + description, null,
 					url, null));
 			double[] testProbabilities = inferencer.getSampledDistribution(
 					instances.get(0), 10, 1, 5);
 			//
-			for (int i = 0; i < model.getNumTopics(); i++) {
+			for (int i = 0; i < ModelUtility.model.getNumTopics(); i++) {
 				if (testProbabilities[i] >= 0.09) {
 					Topic t = new Topic();
 					System.out.println(i + " " + testProbabilities[i]);
 					List<RecommendTag> tags = ModelUtility.getTopWords(i,
-							model, instances);
+							ModelUtility.model, instances);
 					t.setTopicID(i);
 					t.setTopicProbality(testProbabilities[i]);
 					t.setRecommendTags(tags);

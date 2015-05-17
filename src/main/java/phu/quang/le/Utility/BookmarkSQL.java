@@ -568,7 +568,7 @@ public class BookmarkSQL {
 	public static List<AdvanceBookmark> getTrendingBookmarks() {
 		List<AdvanceBookmark> trendingBookmarks = new ArrayList<AdvanceBookmark>();
 		Connection c = DBUtility.getConnection();
-		String sql = "SELECT * FROM bookmarks_new ORDER BY rating DESC, view_count DESC, copy_count DESC, timestamp DESC LIMIT 15";
+		String sql = "SELECT * FROM bookmarks_new ORDER BY rating DESC, view_count DESC, copy_count DESC, posted_time DESC LIMIT 15";
 		try {
 			PreparedStatement pst = c.prepareStatement(sql);
 			ResultSet rs = pst.executeQuery();
@@ -661,6 +661,28 @@ public class BookmarkSQL {
 		return taggedTags;
 	}
 
+	public static List<String> getAllTaggedTags(int bookmarkID) {
+		List<String> allTaggedTags = new ArrayList<String>();
+		Connection c = DBUtility.getConnection();
+		String sql = "SELECT tag_content FROM bookmark_tags_new btn, tags_new t "
+				+ "WHERE bookmarkID = ? AND btn.tagID = t.tagID";
+
+		try {
+			PreparedStatement pst = c.prepareStatement(sql);
+			pst.setInt(1, bookmarkID);
+			ResultSet rs = pst.executeQuery();
+			while (rs.next()) {
+				allTaggedTags.add(rs.getString(1));
+			}
+		} catch (SQLException e) {
+			e.printStackTrace();
+		} finally {
+			DBUtility.closeConnection(c);
+		}
+
+		return allTaggedTags;
+	}
+
 	public static List<String> sameTags(List<TagWeight> usedTags,
 			List<String> taggedTags) {
 		List<String> sameTags = new ArrayList<String>();
@@ -672,5 +694,51 @@ public class BookmarkSQL {
 			}
 		}
 		return sameTags;
+	}
+
+	public static List<AdvanceBookmark> getRecommendBookmarks(int bookmarkID,
+			int userID) {
+		List<AdvanceBookmark> sameBookmarks = new ArrayList<AdvanceBookmark>();
+		List<String> viewingBookmarkTaggedTags = getAllTaggedTags(bookmarkID);
+		Connection c = DBUtility.getConnection();
+		String sql = "SELECT  * FROM bookmarks_new WHERE posted_time >= CURDATE() - INTERVAL 30 DAY "
+				+ "AND posted_time < CURDATE() AND bookmarkID <> ? and userID <> ?";
+		try {
+			PreparedStatement pst = c.prepareStatement(sql);
+			pst.setInt(1, bookmarkID);
+			pst.setInt(2, userID);
+			ResultSet rs = pst.executeQuery();
+			while (rs.next()) {
+				List<String> targetBookmarkTaggedTags = getAllTaggedTags(rs
+						.getInt(1));
+				if (targetBookmarkTaggedTags
+						.removeAll(viewingBookmarkTaggedTags)) {
+					AdvanceBookmark b = new AdvanceBookmark();
+					b.setBookmarkID(rs.getInt(1));
+					b.setPostedUserID(rs.getInt(6));
+					b.setFirstName(UserSQL.getFirstNameByID(rs.getInt(6)));
+					b.setLastName(UserSQL.getLastNameByID(rs.getInt(6)));
+					b.setUrl(rs.getString(2));
+					b.setTitle(rs.getString(3));
+					b.setTags(BookmarkSQL.getTaggedTags(rs.getInt(1),
+							rs.getInt(6)));
+					b.setDate(rs.getDate(7));
+					b.setCopyTimes(rs.getInt(10));
+					b.setViewTimes(rs.getInt(8));
+					b.setTotalRating(rs.getDouble(9));
+					b.setRated(UserSQL.getRateByUserID(userID, rs.getInt(1)));
+					b.setFriend(UserSQL.isFollowed(userID, rs.getInt(6)));
+					b.setCopied(BookmarkSQL.isCopied(userID, rs.getInt(1)));
+					b.setRatedTimes(BookmarkSQL.getRatedTimes(rs.getInt(1)));
+					sameBookmarks.add(b);
+				}
+			}
+		} catch (SQLException e) {
+			System.err.println("Get Same Bookmark: " + e);
+		} finally {
+			DBUtility.closeConnection(c);
+		}
+
+		return sameBookmarks;
 	}
 }

@@ -92,7 +92,7 @@
 					</div>
 					<div class="modal-footer">
 						<button type="submit" class="btn btn-info btn-block"
-							id="<h4 class="text-center text-danger"><i class="fa fa-exclamation-triangle"></i> Something has happend while communicate with Server!</h4>">Login</button>
+							id="login-button">Login</button>
 					</div>
 				</form>
 			</div>

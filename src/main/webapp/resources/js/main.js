@@ -82,16 +82,20 @@ function submitLoginForm() {
 			type : 'POST',
 			url : "/TagRecommend/login",
 			data : {
-				'email' : email,
-				'password' : password
-			},
-			success : function(data) {
+				'encryptedEmail' : encryptText(email),
+				'encryptedPassword' : encryptText(password)
+			}, success : function(data) {
 				$('#login-form').find('button').html('Login');
 				if (data.status == "SUCCESS") {
 					window.location.href = "/TagRecommend/dashboard";
 				} else {
 					bootbox.alert('<h3 class="text-center text-success">' + data.result + '</h3>');
 				}
+			}, error: function(xhr, textStatus, error) {
+			      console.log(xhr.statusText);
+			      console.log(textStatus);
+			      console.log(error);
+			      bootbox.alert('<h4 class="text-center text-danger"><i class="fa fa-exclamation-triangle"></i> Something has happend while communicate with Server!</h4>')
 			}
 		});
 	} else {
@@ -149,6 +153,11 @@ function submitRegisterForm() {
 				} else {
 					bootbox.alert('<h3 class="text-center text-warning">' + data.result + '</h3>');
 				}
+			}, error: function(xhr, textStatus, error) {
+			      console.log(xhr.statusText);
+			      console.log(textStatus);
+			      console.log(error);
+			      bootbox.alert('<h4 class="text-center text-danger"><i class="fa fa-exclamation-triangle"></i> Something has happend while communicate with Server!</h4>')
 			}
 		});
 	} else {
