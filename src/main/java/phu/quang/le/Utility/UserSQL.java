@@ -194,7 +194,7 @@ public class UserSQL {
 	public static List<Bookmark> getAllBookmark(int userID, int offset) {
 		List<Bookmark> bookmarks = new ArrayList<Bookmark>();
 		Connection c = DBUtility.getConnection();
-		String sql = "SELECT * FROM bookmarks_new WHERE userID = ? LIMIT ?";
+		String sql = "SELECT * FROM bookmarks_new WHERE userID = ? ORDER BY posted_time DESC LIMIT ?";
 		PreparedStatement pst;
 		try {
 			pst = c.prepareStatement(sql);
