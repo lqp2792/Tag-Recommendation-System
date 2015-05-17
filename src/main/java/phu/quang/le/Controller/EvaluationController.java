@@ -343,6 +343,8 @@ public class EvaluationController {
 						isReady = false;
 					}
 				}
+			} else {
+				isReady = false;
 			}
 		} catch (SQLException e) {
 			e.printStackTrace();
@@ -392,6 +394,8 @@ public class EvaluationController {
 						isReady = false;
 					}
 				}
+			} else {
+				isReady = false;
 			}
 		} catch (SQLException e) {
 			e.printStackTrace();
@@ -441,6 +445,8 @@ public class EvaluationController {
 						isReady = false;
 					}
 				}
+			} else {
+				isReady = false;
 			}
 		} catch (SQLException e) {
 			e.printStackTrace();
