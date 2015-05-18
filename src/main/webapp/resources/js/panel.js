@@ -639,6 +639,7 @@ $(document).ready(function() {
 			type : 'POST',
 			url : '/TagRecommend/logout',
 			success : function(data) {
+				localStorage.setItem('isGuided', false);
 				window.location.href = '/TagRecommend';
 			}
 		});

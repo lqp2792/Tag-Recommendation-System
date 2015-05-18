@@ -315,7 +315,7 @@ public class EvaluationController {
 			if (rs.next()) {
 				int networkClick = rs.getInt(2);
 				int discoverClick = rs.getInt(4);
-				if ((networkClick % 3) == 0 && (discoverClick % 3) == 0
+				if (((networkClick % 2) == 0 || (discoverClick % 2) == 0)
 						&& discoverClick != 0 && networkClick != 0) {
 					sql = "SELECT * from sv_a7 WHERE userID = ? ORDER BY survey_time DESC LIMIT 1";
 					pst = c.prepareStatement(sql);
@@ -366,7 +366,7 @@ public class EvaluationController {
 			if (rs.next()) {
 				int networkClick = rs.getInt(2);
 				int discoverClick = rs.getInt(4);
-				if ((networkClick % 2) == 0 && (discoverClick % 2) == 0
+				if (((networkClick % 3) == 0 || (discoverClick % 2) == 0)
 						&& discoverClick != 0 && networkClick != 0) {
 					sql = "SELECT * from sv_a6 WHERE userID = ? ORDER BY survey_time DESC LIMIT 1";
 					pst = c.prepareStatement(sql);
@@ -417,7 +417,7 @@ public class EvaluationController {
 			if (rs.next()) {
 				int networkClick = rs.getInt(2);
 				int discoverClick = rs.getInt(4);
-				if ((networkClick % 4) == 0 && (discoverClick % 3) == 0
+				if (((networkClick % 3) == 0 || (discoverClick % 3) == 0)
 						&& discoverClick != 0 && networkClick != 0) {
 					sql = "SELECT * from sv_a1 WHERE userID = ? ORDER BY survey_time DESC LIMIT 1";
 					pst = c.prepareStatement(sql);
@@ -441,7 +441,7 @@ public class EvaluationController {
 				pst.setInt(1, userID);
 				ResultSet rs1 = pst.executeQuery();
 				if (rs1.next()) {
-					if (rs1.getInt(1) < 5) {
+					if (rs1.getInt(1) < 4) {
 						isReady = false;
 					}
 				}
