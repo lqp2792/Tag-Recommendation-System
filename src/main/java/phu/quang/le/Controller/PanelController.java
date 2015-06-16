@@ -5,6 +5,7 @@ import java.io.IOException;
 import java.net.URISyntaxException;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
+import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
@@ -13,6 +14,7 @@ import java.util.StringTokenizer;
 import javax.servlet.http.HttpSession;
 
 import org.apache.commons.validator.routines.UrlValidator;
+import org.jsoup.Connection.Response;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.select.Elements;
@@ -56,7 +58,7 @@ public class PanelController {
 			return new ModelAndView("redirect:/");
 		} else {
 			System.out.println("Get Dashboard Page");
-			if (!ModelUtility.isLoaded) {
+			if (!ModelUtility.isLoaded && !ModelUtility.isLoading) {
 				(new ModelLoadThread()).start();
 			}
 			if (session.getAttribute("sortBy") == null) {
@@ -90,8 +92,7 @@ public class PanelController {
 
 	@RequestMapping(value = "/checkBookmark", method = RequestMethod.POST)
 	@ResponseBody
-	public JsonResponse checkBookmark(String url, ModelMap modelMap)
-			throws IOException {
+	public JsonResponse checkBookmark(String url, ModelMap modelMap) {
 		JsonResponse res = new JsonResponse();
 		UrlValidator urlValidator = new UrlValidator();
 		if (url == null) {
@@ -103,18 +104,32 @@ public class PanelController {
 				res.setStatus("SUCCESS");
 				Bookmark newBookmark = new Bookmark();
 				newBookmark.setUrl(url);
-				Document doc = Jsoup.connect(url).get();
-				String title = doc.title();
-				newBookmark.setTitle(title);
-				modelMap.addAttribute("newBookmark", newBookmark);
-				res.setResult(newBookmark);
-				return res;
+				try {
+					Response response= Jsoup.connect(url)
+					           .ignoreContentType(true)
+					           .userAgent("Mozilla/5.0 (Windows NT 6.1; Win64; x64; rv:25.0) Gecko/20100101 Firefox/25.0")  
+					           .referrer("http://www.google.com")   
+					           .timeout(0) 
+					           .followRedirects(true)
+					           .execute();
+
+					Document doc = response.parse();
+					String title = doc.title();
+					newBookmark.setTitle(title);
+					modelMap.addAttribute("newBookmark", newBookmark);
+					res.setResult(newBookmark);
+				} catch (IOException e) {
+					e.printStackTrace();
+					res.setStatus("FAIL");
+					res.setResult("Something has happend while loading URL");
+				}
 			} else {
 				res.setStatus("FAIL");
 				res.setResult("Url is invalid");
-				return res;
+
 			}
 		}
+		return res;
 	}
 
 	@RequestMapping(value = "/gettags", method = RequestMethod.POST)
@@ -132,7 +147,15 @@ public class PanelController {
 			topics.clear();
 			res.setStatus("SUCCESS");
 			// Make url document more information
-			Document doc = Jsoup.connect(url).get();
+			Response response= Jsoup.connect(url)
+			           .ignoreContentType(true)
+			           .userAgent("Mozilla/5.0 (Windows NT 6.1; Win64; x64; rv:25.0) Gecko/20100101 Firefox/25.0")  
+			           .referrer("http://www.google.com")   
+			           .timeout(0) 
+			           .followRedirects(true)
+			           .execute();
+
+			Document doc = response.parse();
 			String keywords = null, description = null;
 			Elements meta = doc.select("meta[name=keywords]");
 			if (!meta.isEmpty()) {
@@ -156,6 +179,11 @@ public class PanelController {
 				System.out.println("Meta description : " + description);
 			}
 			InstanceList instances = new InstanceList(ModelUtility.getPipe());
+			while (true) {
+				if (ModelUtility.isLoaded) {
+					break;
+				}
+			}
 			TopicInferencer inferencer = ModelUtility.model.getInferencer();
 			instances.addThruPipe(new Instance(title + " " + description, null,
 					url, null));
@@ -198,35 +226,36 @@ public class PanelController {
 				String urlDescription = UrlUtility.getUrlDesciption(url);
 				bookmarkID = BookmarkSQL.addBookmarkToDB(url, title,
 						urlKeywords, urlDescription, userID);
+				System.out.println("Adding BookmarkID:" + bookmarkID);
 				BookmarkSQL.addBookmarkTopics(bookmarkID, topics);
+				System.out.println(tags);
+				StringTokenizer tokens = new StringTokenizer(tags, " ");
+				while (tokens.hasMoreTokens()) {
+					String tag = tokens.nextToken().toLowerCase();
+					int tagID = TagSQL.addTagToDB(userID, tag);
+					result = TagSQL.addTagToBookmark(bookmarkID, tagID);
+					if (result == 0) {
+						System.err.println("Can not add tag to bookmark");
+					} else {
+						System.out.println("Added tag ID: " + tagID
+								+ " to bookmark");
+					}
+					result = UserSQL.userTaggedBookmark(userID, bookmarkID,
+							tagID);
+					if (result == 0) {
+						System.err
+								.println("Can not add information about user tag bookmark");
+					} else {
+						System.out.println("Added information user added "
+								+ tagID + " to bookmark");
+					}
+				}
 			} catch (IOException e) {
 				System.err.println("Read URL information: " + e);
+				rs.setStatus("FAIL");
+				rs.setResult("Something has happend while adding URL");
 			}
 			// process tags added to bookmark
-			System.out.println(tags);
-			StringTokenizer tokens = new StringTokenizer(tags, " ");
-			while (tokens.hasMoreTokens()) {
-				String tag = tokens.nextToken().toLowerCase();
-				int tagID = TagSQL.isTagExisted(tag);
-				if (tagID == -1) {
-					tagID = TagSQL.addTagToDB(userID, tag);
-				}
-				result = TagSQL.addTagToBookmark(bookmarkID, tagID);
-				if (result == 0) {
-					System.err.println("Can not add tag to bookmark");
-				} else {
-					System.out.println("Added tag ID: " + tagID
-							+ " to bookmark");
-				}
-				result = UserSQL.userTaggedBookmark(userID, bookmarkID, tagID);
-				if (result == 0) {
-					System.err
-							.println("Can not add information about user tag bookmark");
-				} else {
-					System.out.println("Added information user added " + tagID
-							+ " to bookmark");
-				}
-			}
 		}
 		return rs;
 	}
@@ -345,4 +374,61 @@ public class PanelController {
 		}
 		return rs;
 	}
+
+	@RequestMapping(value = "/offlineTemp", method = RequestMethod.POST)
+	public @ResponseBody JsonResponse offlineTemp(HttpSession session) {
+		JsonResponse rs = new JsonResponse();
+		int userID = (int) session.getAttribute("userID");
+		Connection c = DBUtility.getConnection();
+		String sql = "UPDATE users SET online = 0 WHERE id = ?";
+
+		try {
+			PreparedStatement pst = c.prepareStatement(sql);
+			pst.setInt(1, userID);
+			pst.executeUpdate();
+		} catch (SQLException e) {
+			e.printStackTrace();
+		}
+
+		return rs;
+	}
+
+	@RequestMapping(value = "/onlineTemp", method = RequestMethod.POST)
+	public @ResponseBody JsonResponse onlineTemp(HttpSession session) {
+		JsonResponse rs = new JsonResponse();
+		int userID = (int) session.getAttribute("userID");
+		Connection c = DBUtility.getConnection();
+		String sql = "UPDATE users SET online = 1 WHERE id = ?";
+
+		try {
+			PreparedStatement pst = c.prepareStatement(sql);
+			pst.setInt(1, userID);
+			pst.executeUpdate();
+		} catch (SQLException e) {
+			e.printStackTrace();
+		}
+
+		return rs;
+	}
+
+	@RequestMapping(value = "/postNotifyDashboard", method = RequestMethod.POST)
+	public @ResponseBody JsonResponse checkPostHistory(HttpSession session) {
+		JsonResponse rs = new JsonResponse();
+		int userID = (int) session.getAttribute("userID");
+		Connection c = DBUtility.getConnection();
+		String sql = "SELECT count(userID) FROM bookmarks_new WHERE userID = ?";
+		try {
+			PreparedStatement pst = c.prepareStatement(sql);
+			pst.setInt(1, userID);
+			ResultSet result = pst.executeQuery();
+			if (!result.next()) {
+				rs.setResult(1);
+			}
+		} catch (SQLException e) {
+			e.printStackTrace();
+		}
+
+		return rs;
+	}
+
 }

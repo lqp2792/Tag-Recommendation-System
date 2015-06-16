@@ -13,32 +13,40 @@ var taggedTags = [];
 var deletedTags = [];
 var dataLength = 0;
 /* =============================================== */
-/*        Thay đổi page content, page header       */
+/* Thay đổi page content, page header */
 /* =============================================== */
 $(document).ready(function() {
 	if (document.URL.indexOf('dashboard') > -1) {
+		updateStatus(1);
 		accessDashboardPage();
+		setTimeout(notifyPostBookmark, 5000);
 	}
 	if (document.URL.indexOf('network') > -1) {
+		updateStatus(1);
 		accessNetworkPage();
 		processClickMenu(1);
+		setTimeout(notifyPostBookmark, 2000);
 	}
 	if(document.URL.indexOf('discover') > -1) {
+		updateStatus(1);
 		accessDiscoverPage();
 		processClickMenu(2)
 	}
 	if(document.URL.indexOf('trending') > -1) {
+		updateStatus(1);
 		accessTrendingPage();
 		processClickMenu(3);
 	}
 	if(document.URL.indexOf('settings') > -1) {
+		updateStatus(1);
 		accessSettingsPage();
 	}
 	if(document.URL.indexOf('evaluation') > -1) {
+		updateStatus(1);
 		accessEvaluationPage();
 	}
 	/* =============================================== */
-	/*   Thực hiện chức năng search khi gõ vào input   */
+	/* Thực hiện chức năng search khi gõ vào input */
 	/* =============================================== */
 	$('#search-button').click(function(e){
 		offset = 0;
@@ -51,25 +59,25 @@ $(document).ready(function() {
 	  }
 	});
 	/* =============================================== */
-	/*          Auto cập nhật số lương online          */
+	/* Auto cập nhật số lương online */
 	/* =============================================== */
 	setTimeout(updateOnlineUsers, 1000);
 	/* =============================================== */
-	/*      Click Follow / Unfolow người dùng khác     */
+	/* Click Follow / Unfolow người dùng khác */
 	/* =============================================== */
 	$(document).on('click', '.follow', function(e) {
 		$(this).html('<i class="fa fa-spinner fa-spin"></i> Processing...');
 		follow(this);
 	});
 	/* =============================================== */
-	/*                 Xử lí nhập Feedback             */
+	/* Xử lí nhập Feedback */
 	/* =============================================== */
 	$('#feedback-form').submit(function(e) {
 		e.preventDefault();
 		processFeedback();
 	});
 	/* =============================================== */
-	/*                  Change password                */
+	/* Change password */
 	/* =============================================== */
 	$('#change-password').click(function(e) {
 		$('#change-password-div').removeClass('hide').addClass('show');
@@ -80,34 +88,28 @@ $(document).ready(function() {
 		processChangePasswordForm();
 	});
 	/* =============================================== */
-	/*          Xử lí view Bookmark iframe modal       */
+	/* Xử lí view Bookmark iframe modal */
 	/* =============================================== */
-	$(document).on('click', '.bookmark-link', function(e){
-		e.preventDefault();
-		var url = $(this).attr('href');
-		var title = $(this).closest('.bookmark').find('.stt').closest('h3').clone();
-		var bookmarkID = $(this).closest('.bookmark').find('.bookmarkID');
-		title = $(title).children().remove().end().text();
-		$('#view-bookmark').find('.modal-title').html('<h4 class="text-info">' + title + '</h4>');
-		$('#view-bookmark').find('.modal-title').append(bookmarkID);
-		$("#view-bookmark").find('.modal-body').html('<iframe width="100%" height="450px" frameborder="0" allowtransparency="true" src="'+url+'"></iframe>');
-	});
 	$('#view-bookmark').on('hidden.bs.modal', function(){
 		$(this).find('.modal-body').html('');
 	});
 	/* =============================================== */
-	/*          Lấy thêm Recommend Bookmark       */
+	/* Lấy thêm Recommend Bookmark */
 	/* =============================================== */
-	$('#view-bookmark').on('shown.bs.modal', function(e) {
-		setTimeout(getRecommendBookmarks, 5000);
+	$(document).on('click', '.bookmark-link', function(e) {
+		setTimeout(getRecommendBookmarks, 5000, this);
 	});
 	/* =============================================== */
-	/*            Click System user - Setting          */
+	/* Click System user - Setting */
 	/* =============================================== */
 	$('#system-users').on('click', function(e) {
 		e.preventDefault();
 		$('#settings-loading').removeClass('hide').addClass('show');
 		getSystemUsers();
+	});
+	
+	$(window).bind('beforeunload', function(){ 
+		 updateStatus(0);
 	});
 });
 
@@ -535,69 +537,56 @@ function accessEvaluationPage() {
 		     });
 			var A15chart = new CanvasJS.Chart("A15",
 					{
-						title:{
-							text: "Novelty of Recommender"
-						},
-				        animationEnabled: true,
-						legend:{
-							verticalAlign: "center",
-							horizontalAlign: "left",
-							fontSize: 16,
-							fontFamily: "Helvetica"        
-						},
-						theme: "theme2",
-						data: [
-						{        
-							type: "pie",       
-							indexLabelFontFamily: "Garamond",       
-							indexLabelFontSize: 16,
-							indexLabel: "{label}",
-							startAngle:-20,      
-							showInLegend: true,
-							toolTipContent:"{legendText}",
-							dataPoints: [
-								{  y: A1.a151, legendText:"Novel And Interesting", label: "Novel And Interesting" },
-								{  y: A1.a152, legendText:"Educational", label: "Educational" },
-								{  y: A1.a153, legendText:"Help discovering", label: "Help discovering" },
-								{  y: A1.a154, legendText:"Cant find new Items" , label: "Cant find new Items"}
-							]
-						}
-						]
-					});
-			var A134chart = new CanvasJS.Chart("A134", {
 				title:{
-					text:"Enjoyability and Attractiveness"				
-
+					text: "Novelty of Recommender"
 				},
-                animationEnabled: true,
-				axisX:{
-					interval: 1,
-					gridThickness: 0,
-					labelFontSize: 10,
-					labelFontStyle: "normal",
-					labelFontWeight: "normal",
-					labelFontFamily: "Lucida Sans Unicode"
-
+				exportFileName: "Pie Chart",
+				exportEnabled: true,
+		                animationEnabled: true,
+				legend:{
+					verticalAlign: "bottom",
+					horizontalAlign: "center"
 				},
-				axisY2:{
-					interlacedColor: "rgba(1,77,101,.2)",
-					gridColor: "rgba(1,77,101,.1)"
-
-				},
-
 				data: [
-				{     
-					type: "bar",
-	                name: "Metrics",
-					axisYType: "secondary",
-					color: "#014D65",				
+				{       
+					type: "pie",
+					showInLegend: true,
+					toolTipContent: "{legendText}: <strong>{y}</strong>",
+					indexLabel: "{label} {y}",
 					dataPoints: [
-					{y: A1.a13Y, label: "Enjoyability"  },
-					{y: A1.a14Y, label: "Attractiveness"  }
+						{  y: A1.a151, legendText: "Novelty and Interesting", exploded: true, label: "Novelty and Interesting" },
+						{  y: A1.a152, legendText: "Educational", label: "Educational" },
+						{  y: A1.a153, legendText: "Help Discovering", label: "Help Discovering" },
+						{  y: A1.a154, legendText: "Cant find new items", label: "Cant find new items"}
 					]
 				}
-				
 				]
+			});
+			var A134chart = new CanvasJS.Chart("A134", {
+				title:{
+					text: "Enjoyability and Attractiveness"   
+			      },
+			      animationEnabled: true,
+			      data: [
+			      {        
+			        type: "stackedColumn100",
+			        name: "Yes",
+			        showInLegend: "true",
+			        dataPoints: [
+				        {  y: A1.a13Y, label: "Attractiveness"},
+				        {  y: A1.a14Y, label: "Enjoyability" }           
+			        ]
+			      }, {        
+			        type: "stackedColumn100",        
+			        name: "No",
+			        showInLegend: "true",
+			        dataPoints: [
+		 			        {  y: A1.a13N, label: "Attractiveness"},
+					        {  y: A1.a14N, label: "Enjoyability" }              
+			        ]
+			      }
+
+			      ]
 			});
 		    A11chart.render();
 		    A12chart.render();
@@ -627,7 +616,7 @@ $(document).ready(function() {
 		var submitButton = $('#add-tag-submit');
 		if (submitButton.hasClass('fa-spin')) {
 			submitButton.removeClass('fa-spinner').removeClass('fa-spin').addClass('fa-plus');
-		}
+et 		}
 	});
 	$('#add-tag-form').submit(function(e) {
 		e.preventDefault();
@@ -715,8 +704,16 @@ function submitBookmark() {
 		},
 		success : function(data) {
 			$('#add-tag-modal').modal('hide');
-			console.log(data);
-			window.location.href = '/TagRecommend/dashboard';
+			if(data.status == "SUCCESS") {
+				console.log(data);
+				bootbox.alert('<h4 class="text-center text-info"><i class="fa fa-check-square-o"></i>  Thank you for your contribute to my System!</h4>', function() {
+					window.location.href = '/TagRecommend/dashboard';	
+				});
+			} else {
+				bootbox.alert('<h4 class="text-center text-warning"><i class="fa fa-exclamation-triangle"></i>' + data.result + '</h4>', function() {
+					window.location.href = '/TagRecommend/dashboard';
+				});
+			}
 		}
 	});
 };
@@ -955,7 +952,7 @@ function loadOtherTags(element) {
 	});
 }
 /* =============================================== */
-/*               Xóa other tag on click            */
+/* Xóa other tag on click */
 /* =============================================== */
 $(document).on('click', '.othertag-delete', function(e) {
 	var bookmarkID = $(this).closest('.bookmark').find('input[name="bookmarkID"]').attr('value');
@@ -1135,7 +1132,7 @@ $(document).ready(function() {
 	});
 });
 /* =============================================== */
-/*           Click link tăng số lần view           */
+/* Click link tăng số lần view */
 /* =============================================== */
 $(document).on('mousedown', '.bookmark-link', function(e) {
 	var bookmark = $(this).closest('.bookmark');
@@ -1158,7 +1155,7 @@ $(document).on('mousedown', '.bookmark-link', function(e) {
 	});	
 });
 /* =============================================== */
-/*                  Xử lí Sort By                  */
+/* Xử lí Sort By */
 /* =============================================== */
 $(document).on('click', '#ar', function(e) {
 	offset = 0;
@@ -1258,7 +1255,7 @@ function ajaxSortBy(sortBy) {
 	});
 }
 /* =============================================== */
-/*      Xử lí hiển thỉ Bookmark trả về từ ajax     */
+/* Xử lí hiển thỉ Bookmark trả về từ ajax */
 /* =============================================== */
 function loadBookmarks(content, data) {
 	for (i = 0; i < data.result.length; i++) {
@@ -1271,7 +1268,7 @@ function loadBookmarks(content, data) {
 		} else {
 			inner += '<div class="row"><div class="col-lg-12"><h3><span class="stt">' + (i+1) + '</span> ' + bookmark.title + '</h3></div></div>';	
 		}
-		inner += '<div class="row"><div class="col-lg-9"><a class="bookmark-link" data-toggle="modal" data-target="#view-bookmark" href="' + bookmark.url + '">' + bookmark.url + '</a></div>';
+		inner += '<div class="row"><div class="col-lg-9"><a class="bookmark-link" href="' + bookmark.url + '" target="_blank">' + bookmark.url + '</a></div>';
 		inner += '<div class="col-lg-3 text-center"><p><b>Last Updated: ' + bookmark.date + '</b></p></div></div>';
 		inner += '<div class="row"><div class="col-lg-9"><div class="inline-div">';
 		inner += '<i class="fa fa-tags"></i> Tags: ';
@@ -1298,7 +1295,7 @@ function loadBookmarks(content, data) {
 		inner += '</div></div>'; // end col-lg-9 , end inline-div
 		inner += '<div class="col-lg-3 text-center"><div class="btn-toolbar">';
 		if($(content).hasClass('dashboard')) {
-			inner += '<button class="btn btn-sm btn-success" data-toggle="modal" data-target="#edit-modal"><i class="fa fa-pencil-square-o"></i> Edit </button>';
+			inner += '<button class="btn btn-sm btn-success" data-toggle="modal" data-target="#edit-modal"><i class="fa fa-pencil-square-o"></i> Edit Tag</button>';
 		} else {
 			if(bookmark.friend === true) {
 				inner += '<button class="btn btn-sm btn-success" data-toggle="modal" data-target="#nw-add-tag-modal"><i class="fa fa-pencil-square-o"></i> Add Tag</button>';
@@ -1331,7 +1328,7 @@ function loadBookmarks(content, data) {
 		if(!$(content).hasClass('dashboard')) {
 			inner += '<div class="row"><div class="col-lg-12" style="margin-top: 25px">';
 			inner += '<p><i>Posted by: ' + bookmark.firstName + ' ' + bookmark.lastName + '</i></p></div>';
-			inner += '</div>';	// end row, 
+			inner += '</div>';	// end row,
 		}
 		inner += '</div>'; // end bookmark
 		$(content).append(inner);
@@ -1346,7 +1343,7 @@ function loadBookmarks(content, data) {
 }
 
 /* =============================================== */
-/*          Auto Complete text khi add tag         */
+/* Auto Complete text khi add tag */
 /* =============================================== */
 $(document).ready(function() {
 	function split(val) {
@@ -1439,7 +1436,7 @@ $(document).ready(function() {
 	};
 });
 /* =============================================== */
-/*            Người dùng click chọn tag            */
+/* Người dùng click chọn tag */
 /* =============================================== */
 $(document).on('click', '.tag-menu1', function(e) {
 	var menu = $(this).closest('ul');
@@ -1578,7 +1575,7 @@ function filterTag(element, tag, current) {
 	$(content).append('<div class="row"><div class="col-lg-12"><p class="text-center text-warning"> ' + '#' + tag + ' Filtered ' + '</p></div></div>');
 }
 /* =============================================== */
-/*           Người dùng click chọn edit            */
+/* Người dùng click chọn edit */
 /* =============================================== */
 $(document).ready(function() {
 	$('#edit-form').submit(function(e) {
@@ -1610,12 +1607,14 @@ $(document).ready(function() {
 						}
 					}
 				}
+				deletedTags = [];
+				addedTags = [];
 			}
 		});
 	});
 });
 /* =============================================== */
-/*        Copy Bookmark từ người dùng khác         */
+/* Copy Bookmark từ người dùng khác */
 /* =============================================== */
 $(document).on('click', '.copy-bookmark', function(e) {
 	$(this).removeClass('copy-bookmark').addClass('uncopy-bookmark');
@@ -1765,7 +1764,7 @@ function discoverBookmarks(tags) {
 	});
 }
 /* =============================================== */
-/*        Xử lí Search khi gõ trực tiếp vào        */
+/* Xử lí Search khi gõ trực tiếp vào */
 /* =============================================== */
 function processSearch() {
 	$('.search').eq(1).html('<div style="text-align: center;"><i class="fa fa-spinner fa-pulse fa-5x"></i></div>');
@@ -1820,7 +1819,7 @@ function processSearch() {
 	}
 }
 /* =============================================== */
-/*              Xủ lí search người dùng            */
+/* Xủ lí search người dùng */
 /* =============================================== */
 function processTagSearchResult(data, searchInput) {
 	searchTag = searchInput.slice(1);
@@ -1833,7 +1832,7 @@ function processTagSearchResult(data, searchInput) {
 	}
 }
 /* =============================================== */
-/*              Xủ lí search người dùng            */
+/* Xủ lí search người dùng */
 /* =============================================== */
 function processUserSearchResult(data, searchInput) {
 	var canvasID = null;
@@ -1887,16 +1886,16 @@ function processUserSearchResult(data, searchInput) {
 				}
 			}
 			inner += '</ul>';
-			inner += '</div>' //end canvas
-			inner += '</div>'; //end col-5
-			inner += '</div>' //end user 
+			inner += '</div>' // end canvas
+			inner += '</div>'; // end col-5
+			inner += '</div>' // end user
 			content.append(inner);
 			createTagsCanvas($('#' + canvasID + 'Container'), $('#' + canvasID), tagListID);
 		}
 	}
 }
 /* =============================================== */
-/*   Khởi tạo canvas cho mỗi user khi search user  */
+/* Khởi tạo canvas cho mỗi user khi search user */
 /* =============================================== */
 function createTagsCanvas(container, element, tagList) {
 	if(!$(element).tagcanvas({
@@ -1914,7 +1913,7 @@ function createTagsCanvas(container, element, tagList) {
 	}
 }
 /* =============================================== */
-/*                Update Online Users              */
+/* Update Online Users */
 /* =============================================== */
 function updateOnlineUsers() {
 	$.ajax({
@@ -1927,7 +1926,7 @@ function updateOnlineUsers() {
 	setTimeout(updateOnlineUsers, 60000);
 }
 /* =============================================== */
-/*         Follow / Unfollow người dùng khác       */
+/* Follow / Unfollow người dùng khác */
 /* =============================================== */
 function follow(button) {
 	var targetUserID = -1;
@@ -1969,7 +1968,7 @@ function follow(button) {
 
 }
 /* =============================================== */
-/*                   Xử lí Feedback                */
+/* Xử lí Feedback */
 /* =============================================== */
 function processFeedback() {
 	if(!$('#feedback-area').val()) {
@@ -2005,7 +2004,7 @@ function processFeedback() {
 	}
 }
 /* =============================================== */
-/*                  Load Sortby Bar                */
+/* Load Sortby Bar */
 /* =============================================== */
 function loadSortByBar(element, sortBy) {
 	$(element).html('<div class="row sortby"><div class="col-lg-2"><h4 class="text-center">Top Priority: </h4></div><div class="col-lg-10">' +
@@ -2025,7 +2024,7 @@ function loadSortByBar(element, sortBy) {
 	}
 }
 /* =============================================== */
-/*          Process Change Password Form           */
+/* Process Change Password Form */
 /* =============================================== */
 function processChangePasswordForm() {
 	var isReady = true;
@@ -2100,7 +2099,7 @@ function resetForm(element) {
 }
 
 /* =============================================== */
-/*          Get System Users - Setting             */
+/* Get System Users - Setting */
 /* =============================================== */
 function getSystemUsers() {
 	$.ajax({
@@ -2156,10 +2155,10 @@ function displaySystemUsers(content, users) {
 }
 
 /* =============================================== */
-/*       Get Recommend Bookmarks when view         */
+/* Get Recommend Bookmarks when view */
 /* =============================================== */
-function getRecommendBookmarks() {
-	var bookmarkID = $('#view-bookmark').find('.bookmarkID').attr('value');
+function getRecommendBookmarks(bookmark) {
+	var bookmarkID = $(bookmark).closest('.bookmark').find('input[name="bookmarkID"]').attr('value');
 	$.ajax({
 		type : 'GET',
 		url : '/TagRecommend/network/recommendBookmarks',
@@ -2168,8 +2167,8 @@ function getRecommendBookmarks() {
 		}, success : function(data) {
 			console.log(data);
 			if(data.status == "SUCCESS") {
-				var footer = $('#view-bookmark').find('.modal-footer');
-				$(footer).html('<h4 class="text-center">Recommend Bookmarks</h4>');
+				var footer = $('#view-bookmark').find('.modal-body');
+				$(footer).html('');
 				var length = 0;
 				if(data.result.length > 5) {
 					length = 5;
@@ -2179,6 +2178,7 @@ function getRecommendBookmarks() {
 				for(i=0; i<length; i++) {
 					$(footer).append('<p class="text-center"><a href="' + data.result[i].url +'">' + data.result[i].title + '</a></p>');
 				}
+				$('#view-bookmark').modal('show');
 			}
 		}, error: function(xhr, textStatus, error) {
 		      console.log(xhr.statusText);
@@ -2188,9 +2188,48 @@ function getRecommendBookmarks() {
 		}
 	});
 }
+
+function updateStatus(status) {
+	if(status == 0) {
+		ajaxurl = "/TagRecommend/dashboard/offlineTemp";
+	} else {
+		ajaxurl = "/TagRecommend/dashboard/onlineTemp"
+	}
+	$.ajax({
+		type : 'POST',
+		url : ajaxurl,
+		data : {
+			'status' : status
+		}, success : function(data) {
+			console.log('Status : ' + status);
+		}
+	});
+}
+
+function notifyPostBookmark() {
+	if (document.URL.indexOf('dashboard') > -1) {
+		ajaxurl = "/TagRecommend/dashboard/postNotifyDashboard";
+	}
+	if (document.URL.indexOf('network') > -1) {
+		ajaxurl = "/TagRecommend/network/postNotifyNetwork";
+	}
+	$.ajax({
+		type : 'POST',
+		url : ajaxurl,
+		success : function(data) {
+			if(data.result == 1) {
+				bootbox.alert('<h4 class="text-center text-warning"><i class="fa fa-exclamation-triangle"></i> Notify: Please share some Bookmarks to other users!</h4>', function(e){
+					$('#add-bookmark-modal').modal('show');
+				})	
+			}
+		}
+	})
+}
 /* ============================================================================================== */
-/*      							 RECOMMENDER SURVEY PROCESS
-/* ============================================================================================== */
+/*
+ * RECOMMENDER SURVEY PROCESS /*
+ * ==============================================================================================
+ */
 $(document).ready(function(e){
 	checkShowA8();
 	$('#A8-survey-form').submit(function(e) {
@@ -2218,7 +2257,7 @@ $(document).ready(function(e){
 	});
 });
 /* =============================================== */
-/*          Check show survey Condidtion           */
+/* Check show survey Condidtion */
 /* =============================================== */
 function checkShowA8() {
 	$.ajax({
@@ -2265,7 +2304,7 @@ function checkShowA1() {
 	});
 };
 /* =============================================== */
-/*               Process submit Survey             */
+/* Process submit Survey */
 /* =============================================== */
 function processA8() {
 	$.ajax({

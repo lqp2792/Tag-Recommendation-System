@@ -13,8 +13,8 @@ import java.util.List;
 import phu.quang.le.Model.AdvanceBookmark;
 import phu.quang.le.Model.Bookmark;
 import phu.quang.le.Model.OnlineHistory;
-import phu.quang.le.Model.RecommendUser;
 import phu.quang.le.Model.OtherUser;
+import phu.quang.le.Model.RecommendUser;
 import phu.quang.le.Model.TagWeight;
 import phu.quang.le.Model.User;
 
@@ -194,7 +194,7 @@ public class UserSQL {
 	public static List<Bookmark> getAllBookmark(int userID, int offset) {
 		List<Bookmark> bookmarks = new ArrayList<Bookmark>();
 		Connection c = DBUtility.getConnection();
-		String sql = "SELECT * FROM bookmarks_new WHERE userID = ? ORDER BY posted_time DESC LIMIT ?";
+		String sql = "SELECT * FROM bookmarks_new WHERE userID = ? ORDER BY bookmarkID DESC LIMIT ?";
 		PreparedStatement pst;
 		try {
 			pst = c.prepareStatement(sql);
@@ -203,7 +203,6 @@ public class UserSQL {
 			ResultSet rs = pst.executeQuery();
 			while (rs.next()) {
 				Bookmark b = new Bookmark();
-				List<String> tags = new ArrayList<String>();
 				int bookmarkID = rs.getInt(1);
 				b.setBookmarkID(rs.getInt(1));
 				b.setUrl(rs.getString(2));
@@ -212,15 +211,7 @@ public class UserSQL {
 				b.setViewTimes(rs.getInt(8));
 				b.setTotalRating(rs.getDouble(9));
 				b.setCopyTimes(rs.getInt(10));
-				String sql1 = "SELECT tag_content FROM bookmark_tags_new bt, tags_new t "
-						+ "WHERE bookmarkID = ? AND bt.tagID = t.tagID";
-				PreparedStatement pst1 = c.prepareStatement(sql1);
-				pst1.setInt(1, bookmarkID);
-				ResultSet rs1 = pst1.executeQuery();
-				while (rs1.next()) {
-					tags.add(rs1.getString(1));
-				}
-				b.setTags(tags);
+				b.setTags(BookmarkSQL.getTaggedTags(bookmarkID, userID));
 				b.setRated(UserSQL.getRateByUserID(userID, bookmarkID));
 				bookmarks.add(b);
 			}
@@ -237,7 +228,7 @@ public class UserSQL {
 		List<TagWeight> mostUsedTags = new ArrayList<TagWeight>();
 		Connection c = DBUtility.getConnection();
 		String sql = "SELECT tag_content, tag_weight FROM user_tag, tags_new "
-				+ "WHERE userID = ? AND user_tag.tagID = tags_new.tagID AND tag_weight > 1 "
+				+ "WHERE userID = ? AND user_tag.tagID = tags_new.tagID  "
 				+ "ORDER BY tag_weight DESC LIMIT 5";
 		try {
 			PreparedStatement pst = c.prepareStatement(sql);
@@ -373,27 +364,20 @@ public class UserSQL {
 				System.out.println("target used topic ids: "
 						+ targetUsedTopicIDs);
 				int sameTagCount = 0;
-				int sameTopicCount = 0;
 				/* So sánh 2 list tag ID của 2 người */
 				for (int i = 0; i < targetUsedTagIDs.size(); i++) {
 					int tagID = targetUsedTagIDs.get(i);
 					sameTagCount += Collections.frequency(usedTagIDs, tagID);
 				}
-				/* So sánh 2 list topic ID của 2 người */
-				for (int i = 0; i < targetUsedTopicIDs.size(); i++) {
-					int topicID = targetUsedTopicIDs.get(i);
-					sameTagCount += Collections
-							.frequency(usedTopicIDs, topicID);
-				}
 				/* Nếu cố tag trùng và topic trùng > 0 thì có thể đưa vào gợi ý */
-				if (sameTagCount > 0 || sameTopicCount > 0) {
+				if (sameTagCount > 0) {
 					user.setUserID(targetUserID);
 					user.setFirstName(rs.getString(4));
 					user.setLastName(rs.getString(5));
 					user.setMostUsedTags(getMostUsedTags(targetUserID));
+					System.out.println("target used tags: " + targetUserID);
 					user.setMostUsedTopics(getMostInterestedTopics(targetUserID));
 					recommendUsers.add(user);
-
 				}
 			}
 		} catch (SQLException e) {
@@ -404,11 +388,17 @@ public class UserSQL {
 		/* Kiểm tra theo số lượng topic giống nhau */
 		Collections.sort(recommendUsers, new Comparator<RecommendUser>() {
 			public int compare(RecommendUser u1, RecommendUser u2) {
-				return (u1.getSameTagCount() - u2.getSameTagCount())
-						+ (u1.getSameTopicCount() - u2.getSameTopicCount()) * 5;
+				return (u2.getSameTagCount() - u1.getSameTagCount())
+						+ (u2.getMostUsedTags().size() - u1.getMostUsedTags()
+								.size());
 			}
 		});
-		return recommendUsers;
+		if (recommendUsers.size() > 5) {
+			return recommendUsers.subList(0, 4);
+		} else {
+			return recommendUsers;
+		}
+
 	}
 
 	/**

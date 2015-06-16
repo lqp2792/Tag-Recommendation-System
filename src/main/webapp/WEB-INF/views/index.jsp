@@ -18,17 +18,27 @@
 <link href="<c:url value="css/animate.css"/>" rel="stylesheet">
 </head>
 <body>
-	<div class="container">
-		<div id="navbar" class="navbar navbar-default ">
-			<div class="collapse navbar-collapse">
-				<ul class="nav navbar-nav">
+	<nav class="navbar navbar-inverse">
+		<div class="container-fluid">
+			<div class="navbar-header">
+				<button type="button" class="navbar-toggle" data-toggle="collapse"
+					data-target="#myNavbar">
+					<span class="icon-bar"></span> <span class="icon-bar"></span> <span
+						class="icon-bar"></span>
+				</button>
+				<a class="navbar-brand" href="#">Phu Le</a>
+			</div>
+			<div class="collapse navbar-collapse" id="myNavbar">
+				<ul class="nav navbar-nav navbar-right">
 					<li id="login-menu"><a href="#login" data-toggle="modal"
-						data-target="#login-modal">Log In</a></li>
-					<li id="register-menu"><a href="#register" data-toggle="modal"
-						data-target="#register-modal">Register</a></li>
+					data-target="#login-modal">Log In</a></li>
+				<li id="register-menu"><a href="#register" data-toggle="modal"
+					data-target="#register-modal">Register</a></li>
 				</ul>
 			</div>
 		</div>
+	</nav>
+	<div class="container">
 		<div class="row text-center">
 			<div class="col-xs-12">
 				<div class="tlt-h h_c">

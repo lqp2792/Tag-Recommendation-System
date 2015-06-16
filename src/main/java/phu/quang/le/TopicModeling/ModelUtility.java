@@ -21,7 +21,8 @@ import cc.mallet.types.InstanceList;
 public class ModelUtility {
 	public static ParallelTopicModel model = null;
 	public static final Object syncObject = new Object();
-	public static boolean isLoaded = false;
+	public static volatile boolean isLoaded = false;
+	public static volatile boolean isLoading = false;
 
 	public static Pipe getPipe() throws URISyntaxException {
 		InstanceList instances = InstanceList.load(new File(ModelUtility.class

@@ -118,7 +118,7 @@ public class EvaluationController {
 		int rs = processSubmitA8(userID, A81, A82, A83);
 		if (rs > 0) {
 			result.setStatus("SUCCESS");
-			result.setResult("Submit survey finished ");
+			result.setResult("Thank You for your time in contributing to this evaluation");
 		} else {
 			result.setStatus("Something wrong has happend ");
 		}
@@ -133,7 +133,7 @@ public class EvaluationController {
 		int rs = processSubmitA7(userID, A7);
 		if (rs > 0) {
 			result.setStatus("SUCCESS");
-			result.setResult("Submit survey finished ");
+			result.setResult("Thank You for your time in contributing to this evaluation");
 		} else {
 			result.setStatus("Something wrong has happend ");
 		}
@@ -148,7 +148,7 @@ public class EvaluationController {
 		int rs = processSubmitA6(userID, A6);
 		if (rs > 0) {
 			result.setStatus("SUCCESS");
-			result.setResult("Submit survey finished ");
+			result.setResult("Thank You for your time in contributing to this evaluation");
 		} else {
 			result.setStatus("Something wrong has happend ");
 		}
@@ -164,7 +164,7 @@ public class EvaluationController {
 		int rs = processSubmitA1(userID, A11, A12, A13, A14, A15);
 		if (rs > 0) {
 			result.setStatus("SUCCESS");
-			result.setResult("Submit survey finished ");
+			result.setResult("Thank You for your time in contributing to this evaluation");
 		} else {
 			result.setStatus("Something wrong has happend ");
 		}
@@ -293,7 +293,7 @@ public class EvaluationController {
 				sql = "UPDATE sv_condition SET show_behavior_mark = show_behavior_mark + 2 WHERE userID = ?";
 				pst = c.prepareStatement(sql);
 				pst.setInt(1, userID);
-				pst.executeQuery();
+				pst.executeUpdate();
 			}
 		} catch (SQLException e) {
 			e.printStackTrace();
@@ -315,8 +315,10 @@ public class EvaluationController {
 			if (rs.next()) {
 				int networkClick = rs.getInt(2);
 				int discoverClick = rs.getInt(4);
-				if (((networkClick % 2) == 0 || (discoverClick % 2) == 0)
-						&& discoverClick != 0 && networkClick != 0) {
+				if (networkClick == 0 && discoverClick == 0) {
+					isReady = false;
+				}
+				if ((networkClick % 3) == 0 || (discoverClick % 3) == 0) {
 					sql = "SELECT * from sv_a7 WHERE userID = ? ORDER BY survey_time DESC LIMIT 1";
 					pst = c.prepareStatement(sql);
 					pst.setInt(1, userID);
@@ -332,6 +334,7 @@ public class EvaluationController {
 						}
 					}
 				} else {
+					System.out.println("Not show A7");
 					isReady = false;
 				}
 				sql = "SELECT count(userID) from bookmarks_new WHERE userID = ? ";
@@ -366,8 +369,10 @@ public class EvaluationController {
 			if (rs.next()) {
 				int networkClick = rs.getInt(2);
 				int discoverClick = rs.getInt(4);
-				if (((networkClick % 3) == 0 || (discoverClick % 2) == 0)
-						&& discoverClick != 0 && networkClick != 0) {
+				if (networkClick == 0 && discoverClick == 0) {
+					isReady = false;
+				}
+				if ((networkClick % 5) == 0 || (discoverClick % 5) == 0) {
 					sql = "SELECT * from sv_a6 WHERE userID = ? ORDER BY survey_time DESC LIMIT 1";
 					pst = c.prepareStatement(sql);
 					pst.setInt(1, userID);
@@ -417,8 +422,10 @@ public class EvaluationController {
 			if (rs.next()) {
 				int networkClick = rs.getInt(2);
 				int discoverClick = rs.getInt(4);
-				if (((networkClick % 3) == 0 || (discoverClick % 3) == 0)
-						&& discoverClick != 0 && networkClick != 0) {
+				if (networkClick == 0 && discoverClick == 0) {
+					isReady = false;
+				}
+				if ((networkClick % 7) == 0 || (discoverClick % 7) == 0) {
 					sql = "SELECT * from sv_a1 WHERE userID = ? ORDER BY survey_time DESC LIMIT 1";
 					pst = c.prepareStatement(sql);
 					pst.setInt(1, userID);
@@ -514,7 +521,7 @@ public class EvaluationController {
 			int A15) {
 		int result = -1;
 		Connection c = DBUtility.getConnection();
-		String sql = "INSERT INTO sv_a1 VALUES (?, ?, ?, ?, ?, ? default)";
+		String sql = "INSERT INTO sv_a1 VALUES (?, ?, ?, ?, ?, ?, default)";
 		try {
 			PreparedStatement pst = c.prepareStatement(sql);
 			pst.setInt(1, userID);

@@ -2,6 +2,7 @@ package phu.quang.le.Controller;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
+import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
@@ -316,6 +317,7 @@ public class NetworkController {
 	@RequestMapping(value = "/recommendBookmarks", method = RequestMethod.GET)
 	public @ResponseBody JsonResponse getRecommendBookmarks(
 			HttpSession session, @RequestParam int bookmarkID) {
+		System.out.println("Get Recommend Boookmark from Viewwing Bookmark");
 		JsonResponse rs = new JsonResponse();
 		int userID = (int) session.getAttribute("userID");
 		List<AdvanceBookmark> recommendBookmarks = BookmarkSQL
@@ -326,6 +328,29 @@ public class NetworkController {
 			rs.setStatus("EMPTY");
 		}
 		rs.setResult(recommendBookmarks);
+		return rs;
+	}
+	
+	
+	@RequestMapping(value = "/postNotifyNetwork", method = RequestMethod.POST)
+	public @ResponseBody JsonResponse checkPostNetwork(HttpSession session) {
+		JsonResponse rs = new JsonResponse();
+		int userID = (int) session.getAttribute("userID");
+		Connection c = DBUtility.getConnection();
+		String sql = "SELECT * FROM sv_condition WHERE userID = ?";
+		try {
+			PreparedStatement pst = c.prepareStatement(sql);
+			pst.setInt(1, userID);
+			ResultSet result = pst.executeQuery();
+			if(result.next()) {
+				if(result.getInt(2) % 7 == 0 && result.getInt(2) != 0) {
+					rs.setResult(1);
+				}
+			}
+		} catch (SQLException e) {
+			e.printStackTrace();
+		}
+		
 		return rs;
 	}
 }

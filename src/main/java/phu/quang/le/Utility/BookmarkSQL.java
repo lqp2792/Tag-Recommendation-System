@@ -61,6 +61,7 @@ public class BookmarkSQL {
 		} finally {
 			DBUtility.closeConnection(c);
 		}
+		System.out.println("Add Bookmark to DB:"  + bookmarkID);
 		return bookmarkID;
 	}
 
@@ -447,10 +448,11 @@ public class BookmarkSQL {
 			}
 			sql = "SELECT tag_weight FROM bookmark_tags_new WHERE bookmarkID = ? AND tagID = ?";
 			pst = c.prepareStatement(sql);
-			pst.setInt(1, userID);
+			pst.setInt(1, bookmarkID);
 			pst.setInt(2, tagID);
 			rs = pst.executeQuery();
 			if (rs.next()) {
+				System.out.println("delete tag in bookmark_tags_new");
 				int tagWeight = rs.getInt(1);
 				if (tagWeight > 1) {
 					sql = "UPDATE bookmark_tags_new SET tag_weight = ? WHERE bookmarkID = ? AND tagID = ?";
@@ -490,7 +492,7 @@ public class BookmarkSQL {
 		int result = -1;
 		int copiedBookmarkID = -1;
 		Connection c = DBUtility.getConnection();
-		String sql = "INSERT INTO bookmarks_new (bookmark_url, bookmark_title, bookmark_keywords, bookmark_description, userID, timestamp, view_count, rating,copy_count)"
+		String sql = "INSERT INTO bookmarks_new (bookmark_url, bookmark_title, bookmark_keywords, bookmark_description, userID, posted_time, view_count, rating,copy_count)"
 				+ " SELECT bookmark_url, bookmark_title, bookmark_keywords, bookmark_description, ?, NOW(), 1, 0, 0 "
 				+ " FROM bookmarks_new WHERE bookmarkID = ?";
 		System.out.println("User ID: " + userID + " copied Bookmark ID: "
@@ -702,7 +704,7 @@ public class BookmarkSQL {
 		List<String> viewingBookmarkTaggedTags = getAllTaggedTags(bookmarkID);
 		Connection c = DBUtility.getConnection();
 		String sql = "SELECT  * FROM bookmarks_new WHERE posted_time >= CURDATE() - INTERVAL 30 DAY "
-				+ "AND posted_time < CURDATE() AND bookmarkID <> ? and userID <> ?";
+				+ "AND posted_time <= CURDATE() AND bookmarkID <> ? and userID <> ?";
 		try {
 			PreparedStatement pst = c.prepareStatement(sql);
 			pst.setInt(1, bookmarkID);

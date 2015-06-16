@@ -146,7 +146,7 @@
 								Recommend Users <span><i style="cursor: pointer;"
 									class="fa fa-question fa-border" data-toggle="tooltip"
 									data-placement="right" data-html="true"
-									data-original-title="5 Users will be recommended based on their interest (topic + tags): <br/> - Same topic count: how many same topic was used <br/>
+									data-original-title="4 Users will be recommended based on their interest (topic + tags): <br/> - Same topic count: how many same topic was used <br/>
 									 - Same tag count - How many same tag was used <br />"></i></span>
 							</h3>
 
@@ -158,7 +158,7 @@
 										<div class="thumbnail clearfix">
 											<img src="images/user.png" class="pull-left"
 												alt="User Default Avatar"
-												style="min-height: 75px; height: 75px; min-width: 75px; width: 75px; margin-right: 5px">
+												style="min-height: 60px; height: 60px; min-width: 60px; width: 60px; margin-right: 5px; margin-bottom: 15px;">
 											<div>
 												<input type="hidden" name="userID" class="userID"
 													value="<c:out value="${recommendUser.userID}" />">
@@ -524,6 +524,7 @@
 						<h4 class="modal-title text-center" id="addBookmarkModalLabel">
 							<i class="fa fa-pencil"></i> Share New Link
 						</h4>
+						<p class="text-center text-warning">May be the Link you post can not be fetched if its Host Server block or limit connect!</p>
 					</div>
 					<form role="form" id="add-bookmark-form">
 						<div class="modal-body">
@@ -594,7 +595,7 @@
 									</div>
 									<div class="col-xs-9">
 										<textarea class="form-control" id="bookmark-tags" rows="3"
-											placeholder="Tags" style="resize: none" data-toggle="tooltip"
+											placeholder="#tag1   #tag2   #tag3  ...   #tag10" style="resize: none" data-toggle="tooltip"
 											data-placement="right"
 											data-original-title="Tag are important part of organizing on Social Bookmarking Service. Using tags that are smart and simple benifits both you and community"></textarea>
 										<p class="text-info">
@@ -642,7 +643,7 @@
 						<form role="form" id="nw-add-tag-form" class="form-inline">
 							<div class="form-group has-feedback">
 								<input type="text" id="nw-tag" class="form-control"
-									placeholder="Tag" style="width: 510px;" />
+									placeholder="Autocomplete Tag or [tag1 tag2 tag3]" style="width: 510px;" />
 							</div>
 							<button type="submit" class="btn btn-info">Add</button>
 						</form>
@@ -659,7 +660,7 @@
 						<form role="form" id="edit-form" class="form-inline">
 							<div class="form-group has-feedback">
 								<input type="text" id="edit" class="form-control"
-									placeholder="Tag" style="width: 480px;" />
+									placeholder="Autocomplete Tag or [tag1, tag2, tag3]" style="width: 480px;" />
 							</div>
 							<button type="submit" class="btn btn-info">Confirm</button>
 							<div id="tagged-tags" style="margin-top: 15px">
@@ -757,10 +758,9 @@
 							aria-label="Close">
 							<span aria-hidden="true">&times;</span>
 						</button>
-						<h4 class="modal-title text-center">View Bookmark</h4>
+						<h4 class="modal-title text-center">Recommend Bookmark</h4>
 					</div>
 					<div class="modal-body"></div>
-					<div class="modal-footer"></div>
 				</div>
 			</div>
 		</div>
@@ -944,126 +944,6 @@
 									</div>
 								</div>
 							</div>
-							<div class="modal-footer">
-								<button type="submit" class="btn btn-info btn-block">Finish
-									Survey</button>
-							</div>
-						</div>
-					</div>
-				</form>
-			</div>
-		</div>
-		<!-- 	Survey 5   -->
-		<div class="modal fade" id="A5-survey-modal" tabindex="-1"
-			role="dialog" aria-labelledby="A5SurveyModalLabel" aria-hidden="true"
-			data-backdrop="static">
-			<div class="modal-dialog">
-				<form role="form" id="A5-survey-form">
-					<div class="modal-content">
-						<div class="modal-header ">
-							<button type="button" class="close" data-dismiss="modal"
-								aria-label="Close">
-								<span aria-hidden="true">&times;</span>
-							</button>
-							<div class="modal-title text-center">
-								<h3 class="text-primary">Attitudes Survey</h3>
-								<small class="text-warning">Please help me finish this
-									Survey. This survey plays an important part of my graduate
-									research!</small>
-							</div>
-						</div>
-						<div class="modal-body">
-							<div class="row"></div>
-							<div class="modal-footer">
-								<button type="submit" class="btn btn-info btn-block">Finish
-									Survey</button>
-							</div>
-						</div>
-					</div>
-				</form>
-			</div>
-		</div>
-		<!-- 	Survey 4   -->
-		<div class="modal fade" id="A4-survey-modal" tabindex="-1"
-			role="dialog" aria-labelledby="A4SurveyModalLabel" aria-hidden="true"
-			data-backdrop="static">
-			<div class="modal-dialog">
-				<form role="form" id="A4-survey-form">
-					<div class="modal-content">
-						<div class="modal-header ">
-							<button type="button" class="close" data-dismiss="modal"
-								aria-label="Close">
-								<span aria-hidden="true">&times;</span>
-							</button>
-							<div class="modal-title text-center">
-								<h3 class="text-primary">Attitudes Survey</h3>
-								<small class="text-warning">Please help me finish this
-									Survey. This survey plays an important part of my graduate
-									research!</small>
-							</div>
-						</div>
-						<div class="modal-body">
-							<div class="row"></div>
-							<div class="modal-footer">
-								<button type="submit" class="btn btn-info btn-block">Finish
-									Survey</button>
-							</div>
-						</div>
-					</div>
-				</form>
-			</div>
-		</div>
-		<!-- 	Survey 3   -->
-		<div class="modal fade" id="A3-survey-modal" tabindex="-1"
-			role="dialog" aria-labelledby="A3SurveyModalLabel" aria-hidden="true"
-			data-backdrop="static">
-			<div class="modal-dialog">
-				<form role="form" id="A3-survey-form">
-					<div class="modal-content">
-						<div class="modal-header ">
-							<button type="button" class="close" data-dismiss="modal"
-								aria-label="Close">
-								<span aria-hidden="true">&times;</span>
-							</button>
-							<div class="modal-title text-center">
-								<h3 class="text-primary">Attitudes Survey</h3>
-								<small class="text-warning">Please help me finish this
-									Survey. This survey plays an important part of my graduate
-									research!</small>
-							</div>
-						</div>
-						<div class="modal-body">
-							<div class="row"></div>
-							<div class="modal-footer">
-								<button type="submit" class="btn btn-info btn-block">Finish
-									Survey</button>
-							</div>
-						</div>
-					</div>
-				</form>
-			</div>
-		</div>
-		<!-- 	Survey 2   -->
-		<div class="modal fade" id="A2-survey-modal" tabindex="-1"
-			role="dialog" aria-labelledby="A2SurveyModalLabel" aria-hidden="true"
-			data-backdrop="static">
-			<div class="modal-dialog">
-				<form role="form" id="A2-survey-form">
-					<div class="modal-content">
-						<div class="modal-header ">
-							<button type="button" class="close" data-dismiss="modal"
-								aria-label="Close">
-								<span aria-hidden="true">&times;</span>
-							</button>
-							<div class="modal-title text-center">
-								<h3 class="text-primary">Attitudes Survey</h3>
-								<small class="text-warning">Please help me finish this
-									Survey. This survey plays an important part of my graduate
-									research!</small>
-							</div>
-						</div>
-						<div class="modal-body">
-							<div class="row"></div>
 							<div class="modal-footer">
 								<button type="submit" class="btn btn-info btn-block">Finish
 									Survey</button>

@@ -8,16 +8,18 @@ import phu.quang.le.Controller.PanelController;
 public class ModelLoadThread extends Thread {
 	@Override
 	public void run() {
+		ModelUtility.isLoading = true;
 		try {
 			if (ModelUtility.model == null) {
 				System.out.println("Prepare Topic Model");
 				ModelUtility.model = ModelUtility.getTopicModel();
 				ModelUtility.isLoaded = true;
+				ModelUtility.isLoading = false;
 			}
 		} catch (ClassNotFoundException | URISyntaxException | IOException e) {
 			System.err.println("Get Topic Model exception : " + e);
 		} finally {
-			if(PanelController.availableTags.size() == 0) {
+			if (PanelController.availableTags.size() == 0) {
 				(new ModelAvailableTagsPrepareThread()).start();
 			}
 		}

@@ -137,19 +137,41 @@ function submitRegisterForm() {
 	}
 
 	if(isReady === true) {
+		var email = $('#email-register').val();
+		var password = $('#password').val();
 		$.ajax({
 			type : 'POST',
 			url : '/TagRecommend/register',
 			data : {
 				'firstName' : $('#first-name').val(),
 				'lastName' : $('#last-name').val(),
-				'encryptedEmail' : encryptText($('#email-register').val()),
-				'encryptedPassword' : encryptText($('#password').val())
+				'encryptedEmail' : encryptText(email),
+				'encryptedPassword' : encryptText(password)
 			}, success : function(data) {
 				$('#register-form').find('button').html('Register');
 				$('#register-modal').modal('hide');
 				if(data.status == "SUCCESS") {
-					bootbox.alert('<h3 class="text-center text-success">' + data.result + '</h3>');
+					bootbox.alert('<h3 class="text-center text-success">' + data.result + '</h3>', function(e) {
+						$.ajax({
+							type : 'POST',
+							url : "/TagRecommend/login",
+							data : {
+								'encryptedEmail' : encryptText(email),
+								'encryptedPassword' : encryptText(password)
+							}, success : function(data) {
+								if (data.status == "SUCCESS") {
+									window.location.href = "/TagRecommend/dashboard";
+								} else {
+									bootbox.alert('<h3 class="text-center text-success">' + data.result + '</h3>');
+								}
+							}, error: function(xhr, textStatus, error) {
+							      console.log(xhr.statusText);
+							      console.log(textStatus);
+							      console.log(error);
+							      bootbox.alert('<h4 class="text-center text-danger"><i class="fa fa-exclamation-triangle"></i> Something has happend while communicate with Server!</h4>')
+							}
+						});
+					});
 				} else {
 					bootbox.alert('<h3 class="text-center text-warning">' + data.result + '</h3>');
 				}
